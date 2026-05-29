@@ -570,7 +570,7 @@ textarea{resize:vertical;min-height:80px;}
 // ══════════════════════════════════════════════════════════
 // CONFIGURACIÓN — Reemplazá con tu URL de Apps Script
 // ══════════════════════════════════════════════════════════
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxbNBrR-3MUpfdzTWmSLr55zbmf3FOVP8ICkYZtOu8cLlGU0JCoPKoCSJ3kbxkEPYRww/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/TU_ID_AQUI/exec';
 
 // Colores por cliente
 const CLIENT_CONFIG = {
@@ -593,16 +593,10 @@ const STATE = {
 // ══════════════════════════════════════════════════════════
 const $ = id => document.getElementById(id);
 const showOnly = id => {
-  ['scr-cedula','loader-cedula','scr-pdv','loader-productos',
-   'scr-form','loader-save','scr-success']
-    .forEach(s => {
-      const el = $(s);
-      if (!el) return;
-      el.classList.remove('active');
-      if (el.tagName === 'DIV') el.style.display = '';
-    });
-  const t = $(id);
-  if (t) { t.classList.add('active'); }
+  ["scr-cedula","loader-cedula","scr-pdv","loader-productos","scr-form","loader-save","scr-success"]
+    .forEach(s => { const el = document.getElementById(s); if (el) el.classList.remove("active"); });
+  const t = document.getElementById(id);
+  if (t) t.classList.add("active");
 };
 
 function showErr(id, msg) {
@@ -1155,7 +1149,9 @@ function toggleMotivo(idx, val) {
 
 function addSMRow(tipo) {
   const key = 'sm' + tipo.charAt(0).toUpperCase() + tipo.slice(1);
-  const n = ++(STATE.rowCounters[key] || (STATE.rowCounters[key] = 0));
+  if (!STATE.rowCounters[key]) STATE.rowCounters[key] = 0;
+  STATE.rowCounters[key]++;
+  const n = STATE.rowCounters[key];
   const uid = `sm-${tipo}-${n}`;
   const opts = buildProdOpts();
   const containerId = tipo === 'venc' ? 'sm-venc-rows' : tipo === 'prox' ? 'sm-prox-rows' : 'sm-aver-rows';
