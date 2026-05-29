@@ -3,1380 +3,1265 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>+Marka · Relevamiento de Campo</title>
+<title>+Marka · Relevamiento</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-/* ── TOKENS ──────────────────────────────── */
-:root {
-  --bg:        #0a0c10;
-  --surface:   #111318;
-  --card:      #181c24;
-  --card2:     #1e2330;
-  --border:    #252b38;
-  --border2:   #2e3547;
-  --text:      #e2e8f4;
-  --muted:     #5a6480;
-  --faint:     #ffffff08;
+:root{
+  --bg:#07090f;
+  --surface:#0e1118;
+  --card:#13171f;
+  --card2:#181d28;
+  --border:#1e2535;
+  --border2:#28334a;
+  --text:#e8edf8;
+  --sub:#94a3c0;
+  --muted:#4a5680;
+  --faint:#ffffff06;
 
-  --accent:    #f59e0b;   /* +Marka gold */
-  --green:     #22c55e;
-  --red:       #ef4444;
-  --blue:      #3b82f6;
-  --orange:    #f97316;
+  --gold:#f5a623;
+  --green:#10d98a;
+  --red:#ff4d6a;
+  --blue:#4f8ef7;
+  --purple:#a78bfa;
 
-  --font:      'Sora', sans-serif;
-  --mono:      'JetBrains Mono', monospace;
-  --ease:      cubic-bezier(.4,0,.2,1);
-  --fast:      .16s;
-  --mid:       .28s;
-  --slow:      .5s;
+  --cc:#f5a623; /* client color — sobrescrito dinámicamente */
+  --cb:#f5a62318;
 
-  /* Client colors (set dynamically) */
-  --client-color: #f59e0b;
-  --client-bg:    #f59e0b18;
+  --r:14px;
+  --r2:10px;
+  --f:'Inter',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1);
 }
 
-/* ── RESET ───────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{font-size:16px;-webkit-tap-highlight-color:transparent;scroll-behavior:smooth;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;}
-button{cursor:pointer;border:none;background:none;font-family:inherit;}
-input,select,textarea{font-family:inherit;}
+html{font-size:16px;-webkit-tap-highlight-color:transparent;}
+body{font-family:var(--f);background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;}
+button{cursor:pointer;border:none;background:none;font-family:inherit;color:inherit;}
+input,select,textarea{font-family:inherit;color:inherit;}
 
-/* ── ANIMATED BG ─────────────────────────── */
+/* ── BG GLOW ── */
 body::before{
-  content:'';position:fixed;inset:0;z-index:0;
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 50% at 10% 5%,  #f59e0b0a, transparent),
-    radial-gradient(ellipse 50% 60% at 90% 90%, #3b82f60a, transparent);
-  pointer-events:none;
+    radial-gradient(ellipse 60% 40% at 15% 0%, var(--cc)0c, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 85% 100%, #4f8ef70a, transparent 60%);
+  transition:background .6s var(--ease);
 }
 
-/* ── WRAPPER ─────────────────────────────── */
-#app{
-  position:relative;z-index:1;
-  max-width:600px;margin:0 auto;
-  padding:0 0 5rem;
-  display:flex;flex-direction:column;
-}
+/* ── LAYOUT ── */
+#app{position:relative;z-index:1;max-width:580px;margin:0 auto;padding-bottom:6rem;display:flex;flex-direction:column;}
 
-/* ── HEADER ──────────────────────────────── */
-.app-header{
-  display:flex;align-items:center;gap:14px;
-  padding:1.25rem 1.25rem 1rem;
-  border-bottom:1px solid var(--border);
+/* ── HEADER ── */
+.hdr{
+  display:flex;align-items:center;gap:12px;
+  padding:1rem 1.1rem .85rem;
   background:var(--surface);
+  border-bottom:1px solid var(--border);
   position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(12px);
 }
 .logo{
-  width:38px;height:38px;border-radius:10px;
-  background:linear-gradient(135deg,var(--accent),#d97706);
+  width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--cc),color-mix(in srgb,var(--cc) 70%,#000));
   display:grid;place-items:center;
-  font-size:.85rem;font-weight:700;color:#000;
-  flex-shrink:0;letter-spacing:-.03em;
+  font-size:.78rem;font-weight:800;color:#000;letter-spacing:-.04em;
+  transition:background .4s var(--ease);
 }
-.header-text .title{font-size:.95rem;font-weight:600;color:var(--text);}
-.header-text .sub{font-size:.72rem;color:var(--muted);margin-top:.1rem;}
-.header-client-badge{
-  margin-left:auto;padding:.3rem .8rem;border-radius:50px;
-  font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  background:var(--client-bg);color:var(--client-color);
-  border:1px solid var(--client-color)44;
-  display:none;
+.hdr-txt .t{font-size:.88rem;font-weight:600;}
+.hdr-txt .s{font-size:.68rem;color:var(--sub);margin-top:.1rem;}
+.client-pill{
+  margin-left:auto;padding:.28rem .75rem;border-radius:50px;
+  font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--cb);color:var(--cc);
+  border:1px solid color-mix(in srgb,var(--cc) 40%,transparent);
+  display:none;white-space:nowrap;
+  transition:all .3s var(--ease);
 }
 
-/* ── STEP PROGRESS ───────────────────────── */
-.step-progress{
-  display:flex;align-items:center;gap:0;
-  padding:.75rem 1.25rem;
+/* ── STEPS ── */
+.steps{
+  display:flex;align-items:center;
+  padding:.65rem 1.1rem;
   background:var(--surface);
   border-bottom:1px solid var(--border);
-  overflow:hidden;
+  display:none;
 }
-.step-item{
-  display:flex;align-items:center;gap:.4rem;
-  flex:1;opacity:.35;transition:opacity var(--mid) var(--ease);
-}
-.step-item.active{opacity:1;}
-.step-item.done{opacity:.6;}
-.step-dot{
-  width:24px;height:24px;border-radius:50%;
-  border:2px solid var(--border2);
+.step{display:flex;align-items:center;gap:.35rem;flex:1;opacity:.3;transition:opacity .3s var(--ease);}
+.step.active{opacity:1;}
+.step.done{opacity:.55;}
+.sdot{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  border:1.5px solid var(--border2);
   display:grid;place-items:center;
-  font-size:.65rem;font-weight:700;color:var(--muted);
-  flex-shrink:0;transition:all var(--mid) var(--ease);
+  font-size:.6rem;font-weight:700;color:var(--muted);
+  transition:all .25s var(--ease);
 }
-.step-item.active .step-dot{
-  border-color:var(--client-color);
-  background:var(--client-bg);color:var(--client-color);
-}
-.step-item.done .step-dot{
-  background:var(--green);border-color:var(--green);color:#fff;
-}
-.step-label{font-size:.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.step-item.active .step-label{color:var(--text);}
-.step-line{width:100%;height:1px;background:var(--border);flex:1;margin:0 .3rem;}
+.step.active .sdot{border-color:var(--cc);background:var(--cb);color:var(--cc);}
+.step.done .sdot{background:var(--green);border-color:var(--green);color:#000;font-size:.7rem;}
+.slabel{font-size:.65rem;color:var(--sub);white-space:nowrap;}
+.step.active .slabel{color:var(--text);}
+.sline{flex:1;height:1px;background:var(--border);margin:0 .25rem;}
 
-/* ── SCREENS ─────────────────────────────── */
-.screen{display:none;flex-direction:column;gap:0;animation:fadeUp var(--mid) var(--ease) both;}
-.screen.active{display:flex;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+/* ── SCREENS ── */
+.scr{display:none;flex-direction:column;animation:fadeUp .22s var(--ease) both;}
+.scr.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── LOADER SCREEN ───────────────────────── */
-.loader-screen{
+/* ── LOADER ── */
+.loader{
   display:none;flex-direction:column;align-items:center;
-  justify-content:center;gap:1rem;padding:3rem 1.5rem;text-align:center;
+  justify-content:center;gap:.85rem;padding:3.5rem 1.5rem;text-align:center;
 }
-.loader-screen.active{display:flex;}
-.spinner{
-  width:48px;height:48px;border-radius:50%;
-  border:3px solid var(--border2);
-  border-top-color:var(--client-color);
-  animation:spin .75s linear infinite;
+.loader.active{display:flex;}
+.spin{
+  width:44px;height:44px;border-radius:50%;
+  border:2.5px solid var(--border2);border-top-color:var(--cc);
+  animation:spin .7s linear infinite;
 }
 @keyframes spin{to{transform:rotate(360deg)}}
-.loader-msg{font-size:.9rem;color:var(--text);}
-.loader-sub{font-size:.78rem;color:var(--muted);}
+.loader .lm{font-size:.88rem;color:var(--text);font-weight:500;}
+.loader .ls{font-size:.73rem;color:var(--sub);}
 
-/* ── SECTION CARD ────────────────────────── */
-.section-block{
-  margin:1rem 1rem 0;
+/* ── CARD ── */
+.card{
+  margin:.85rem .85rem 0;
   background:var(--card);border:1px solid var(--border);
-  border-radius:16px;overflow:hidden;
+  border-radius:var(--r);overflow:hidden;
 }
-.section-header{
-  display:flex;align-items:center;gap:.75rem;
-  padding:1rem 1.25rem .75rem;
+.card-hdr{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.85rem 1.1rem .7rem;
   border-bottom:1px solid var(--border);
+  background:linear-gradient(to bottom,var(--card2),var(--card));
 }
-.section-icon{font-size:1.1rem;flex-shrink:0;}
-.section-title{font-size:.9rem;font-weight:600;color:var(--text);}
-.section-sub{font-size:.73rem;color:var(--muted);margin-top:.15rem;}
-.section-body{padding:1rem 1.25rem 1.25rem;display:flex;flex-direction:column;gap:1rem;}
-
-/* ── FIELD ───────────────────────────────── */
-.field{display:flex;flex-direction:column;gap:.4rem;}
-.field label{
-  font-size:.73rem;font-weight:600;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.07em;
+.card-icon{
+  width:32px;height:32px;border-radius:8px;flex-shrink:0;
+  background:var(--cb);display:grid;place-items:center;font-size:.95rem;
 }
-.field label .req{color:var(--red);margin-left:.2rem;}
+.card-title{font-size:.88rem;font-weight:600;}
+.card-sub{font-size:.7rem;color:var(--sub);margin-top:.1rem;}
+.card-body{padding:.9rem 1.1rem 1.1rem;display:flex;flex-direction:column;gap:.85rem;}
 
-input[type="text"],input[type="number"],input[type="date"],
-select,textarea{
+/* ── FIELD ── */
+.field{display:flex;flex-direction:column;gap:.32rem;}
+.field label{font-size:.68rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;}
+.field label .req{color:var(--red);margin-left:.15rem;}
+
+input[type=text],input[type=number],input[type=date],select,textarea{
   width:100%;background:var(--card2);
-  border:1.5px solid var(--border2);
-  border-radius:10px;color:var(--text);
-  padding:.7rem 1rem;font-size:.9rem;
-  outline:none;-webkit-appearance:none;
-  transition:border-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+  border:1.5px solid var(--border2);border-radius:var(--r2);
+  color:var(--text);padding:.65rem .9rem;font-size:.88rem;
+  outline:none;-webkit-appearance:none;appearance:none;
+  transition:border-color .15s var(--ease),box-shadow .15s var(--ease);
 }
 input:focus,select:focus,textarea:focus{
-  border-color:var(--client-color);
-  box-shadow:0 0 0 3px var(--client-color)20;
+  border-color:var(--cc);box-shadow:0 0 0 3px color-mix(in srgb,var(--cc) 18%,transparent);
 }
-input::placeholder,textarea::placeholder{color:var(--muted);}
-input[type="number"]{font-family:var(--mono);}
+input::placeholder{color:var(--muted);}
+input[type=number]{font-family:var(--mono);}
 select option{background:var(--card);}
-textarea{resize:vertical;min-height:80px;}
+textarea{resize:vertical;min-height:72px;}
 
-.input-icon-wrap{position:relative;}
-.input-icon-wrap .icon{
-  position:absolute;left:.9rem;top:50%;transform:translateY(-50%);
-  color:var(--muted);pointer-events:none;font-size:1rem;
-}
-.input-icon-wrap input{padding-left:2.5rem;}
-
-/* ── CEDULA INPUT ────────────────────────── */
-.cedula-input{
-  font-family:var(--mono);font-size:1.8rem;font-weight:500;
-  letter-spacing:.12em;text-align:center;
-  padding:1.1rem;border-radius:14px;
+/* ── CI INPUT ── */
+.ci-input{
+  font-family:var(--mono);font-size:1.7rem;font-weight:500;
+  letter-spacing:.14em;text-align:center;
+  padding:1rem;border-radius:12px;
   background:var(--card2);border:2px solid var(--border2);
   color:var(--text);width:100%;outline:none;
-  transition:border-color var(--fast) var(--ease);
+  transition:border-color .15s,box-shadow .15s;
 }
-.cedula-input:focus{border-color:var(--accent);box-shadow:0 0 0 4px #f59e0b20;}
+.ci-input:focus{border-color:var(--gold);box-shadow:0 0 0 4px #f5a62322;}
 
-/* ── PRICE GRID ──────────────────────────── */
-.price-section{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:14px;overflow:hidden;margin-top:.5rem;
-}
-.price-section-header{
-  display:flex;align-items:center;gap:.6rem;
-  padding:.75rem 1rem;background:var(--card2);
-  border-bottom:1px solid var(--border);
-  font-size:.8rem;font-weight:600;color:var(--text);
-}
-.price-section-badge{
-  padding:.2rem .65rem;border-radius:50px;font-size:.68rem;font-weight:700;
-}
-.badge-super{background:#22c55e20;color:var(--green);}
-.badge-biggie{background:#f59e0b20;color:var(--accent);}
-
-.price-table{width:100%;border-collapse:collapse;}
-.price-table thead th{
-  font-size:.68rem;font-weight:700;letter-spacing:.07em;color:var(--muted);
-  text-transform:uppercase;padding:.6rem .8rem;
-  text-align:left;border-bottom:1px solid var(--border);
-}
-.price-table tbody td{
-  padding:.55rem .8rem;border-bottom:1px solid var(--border);
-  vertical-align:middle;
-}
-.price-table tbody tr:last-child td{border-bottom:none;}
-.price-table tbody tr:hover td{background:var(--faint);}
-.prod-name{font-size:.85rem;color:var(--text);font-weight:500;}
-.prod-code{font-size:.68rem;color:var(--muted);font-family:var(--mono);}
-.price-input{
-  width:100%;background:var(--card2);border:1.5px solid var(--border);
-  border-radius:8px;color:var(--text);padding:.45rem .6rem;
-  font-size:.85rem;font-family:var(--mono);text-align:right;
-  outline:none;-webkit-appearance:none;
-  transition:border-color var(--fast) var(--ease);
-}
-.price-input:focus{border-color:var(--client-color);box-shadow:0 0 0 2px var(--client-color)18;}
-.price-input.error{border-color:var(--red)!important;background:#ef444415;}
-.price-input.ok{border-color:var(--green);}
-.price-cell{min-width:100px;}
-.gs-symbol{font-size:.72rem;color:var(--muted);margin-right:.3rem;}
-
-/* ── PRODUCT ROW (vencer/averiados) ─────── */
-.prod-row{
-  background:var(--card2);border:1px solid var(--border);
-  border-radius:12px;padding:.9rem 1rem;
-  display:flex;flex-direction:column;gap:.75rem;
-  animation:fadeUp var(--fast) var(--ease);
-}
-.prod-row-header{
-  display:flex;align-items:center;justify-content:space-between;
-}
-.prod-row-num{font-family:var(--mono);font-size:.68rem;color:var(--muted);}
-.btn-remove{
-  width:26px;height:26px;border-radius:7px;
-  background:var(--faint);color:var(--red);
-  display:grid;place-items:center;font-size:.8rem;
-  transition:background var(--fast) var(--ease);
-}
-.btn-remove:hover{background:#ef444420;}
-.prod-grid{display:grid;gap:.6rem;}
-.cols-2{grid-template-columns:1fr 1fr;}
-.cols-3{grid-template-columns:1fr 1fr 1fr;}
-.prod-grid input,.prod-grid select{font-size:.82rem;padding:.5rem .7rem;}
-
-.btn-add-row{
-  display:flex;align-items:center;justify-content:center;gap:.5rem;
-  width:100%;padding:.65rem;border-radius:10px;
-  border:1.5px dashed var(--border2);
-  color:var(--muted);font-size:.82rem;font-weight:500;
-  background:transparent;
-  transition:all var(--fast) var(--ease);margin-top:.25rem;
-}
-.btn-add-row:hover{border-color:var(--client-color);color:var(--client-color);background:var(--client-bg);}
-
-/* ── RELEVADOR CHIP ──────────────────────── */
-.relevador-chip{
-  display:flex;align-items:center;gap:.85rem;
-  padding:.85rem 1rem;
-  background:var(--card2);border:1px solid var(--border2);border-radius:12px;
-}
-.rel-avatar{
-  width:40px;height:40px;border-radius:50%;
-  background:linear-gradient(135deg,var(--client-color),var(--accent));
-  display:grid;place-items:center;
-  font-weight:700;font-size:.9rem;color:#000;flex-shrink:0;
-}
-.rel-name{font-weight:600;font-size:.9rem;color:var(--text);}
-.rel-ci{font-size:.72rem;color:var(--muted);font-family:var(--mono);margin-top:.1rem;}
-.rel-pdv{font-size:.72rem;color:var(--client-color);margin-top:.2rem;font-weight:500;}
-
-/* ── CHECKBOX MOTIVOS ────────────────────── */
-.motivo-grid{display:flex;flex-direction:column;gap:.5rem;}
-.motivo-item{
+/* ── RELEVADOR CHIP ── */
+.rel-chip{
   display:flex;align-items:center;gap:.75rem;
-  padding:.6rem .85rem;border-radius:10px;
-  background:var(--card2);border:1.5px solid var(--border);
-  cursor:pointer;transition:all var(--fast) var(--ease);
+  padding:.75rem .9rem;
+  background:var(--card2);border:1px solid var(--border2);border-radius:var(--r2);
+}
+.rel-av{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--cc),color-mix(in srgb,var(--cc) 60%,#000));
+  display:grid;place-items:center;font-weight:700;font-size:.85rem;color:#000;
+}
+.rel-name{font-weight:600;font-size:.88rem;}
+.rel-meta{font-size:.68rem;color:var(--sub);margin-top:.1rem;font-family:var(--mono);}
+.rel-client{font-size:.7rem;color:var(--cc);margin-top:.18rem;font-weight:600;}
+
+/* ── PDV CARDS (frigomerc) ── */
+.pdv-grid{display:flex;flex-direction:column;gap:.5rem;}
+.pdv-card{
+  display:flex;align-items:center;gap:.75rem;
+  padding:.75rem .9rem;border-radius:var(--r2);
+  border:1.5px solid var(--border2);background:var(--card2);
+  cursor:pointer;transition:all .15s var(--ease);
   -webkit-tap-highlight-color:transparent;
 }
-.motivo-item:hover{border-color:var(--client-color);background:var(--client-bg);}
-.motivo-item.selected{border-color:var(--client-color);background:var(--client-bg);}
-.motivo-check{
-  width:20px;height:20px;border-radius:6px;
-  border:2px solid var(--border2);flex-shrink:0;
-  display:grid;place-items:center;
-  transition:all var(--fast) var(--ease);background:transparent;
+.pdv-card:hover{border-color:var(--cc);background:var(--cb);}
+.pdv-card.selected{border-color:var(--cc);background:var(--cb);}
+.pdv-dot{
+  width:20px;height:20px;border-radius:50%;border:2px solid var(--border2);
+  flex-shrink:0;display:grid;place-items:center;
+  transition:all .15s;
 }
-.motivo-item.selected .motivo-check{
-  background:var(--client-color);border-color:var(--client-color);
+.pdv-card.selected .pdv-dot{background:var(--cc);border-color:var(--cc);}
+.pdv-card.selected .pdv-dot::after{content:'✓';font-size:.6rem;color:#000;font-weight:800;}
+.pdv-info .pi-name{font-size:.85rem;font-weight:500;}
+.pdv-info .pi-cadena{font-size:.68rem;color:var(--sub);margin-top:.08rem;}
+.pdv-badge{
+  margin-left:auto;padding:.18rem .55rem;border-radius:50px;
+  font-size:.62rem;font-weight:700;letter-spacing:.05em;
 }
-.motivo-item.selected .motivo-check::after{
-  content:'✓';color:#000;font-size:.7rem;font-weight:700;
-}
-.motivo-label{font-size:.85rem;color:var(--text);}
+.badge-super{background:#10d98a18;color:var(--green);}
+.badge-biggie{background:#f5a62318;color:var(--gold);}
 
-/* ── TOGGLE ──────────────────────────────── */
-.toggle-row{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:1rem;padding:.75rem .85rem;
-  background:var(--card2);border:1.5px solid var(--border);border-radius:10px;
+/* ── AUTOCOMPLETE ── */
+.ac-wrap{position:relative;}
+.ac-input{width:100%;}
+.ac-input.has-val{border-color:var(--green)!important;}
+.ac-barcode{
+  display:none;align-items:center;gap:.5rem;
+  margin-top:.4rem;padding:.5rem .75rem;
+  background:color-mix(in srgb,var(--cc) 8%,transparent);
+  border:1px solid color-mix(in srgb,var(--cc) 25%,transparent);
+  border-radius:8px;
 }
-.toggle-label{font-size:.85rem;color:var(--text);}
-.toggle-switch{position:relative;width:46px;height:26px;flex-shrink:0;}
-.toggle-switch input{display:none;}
-.toggle-track{
+.ac-barcode.show{display:flex;}
+.ac-barcode .bc-label{font-size:.68rem;color:var(--sub);}
+.ac-barcode .bc-val{font-family:var(--mono);font-size:.78rem;color:var(--cc);font-weight:600;}
+.ac-dropdown{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;
+  background:var(--card);border:1.5px solid var(--border2);
+  border-radius:var(--r2);overflow:hidden;
+  box-shadow:0 8px 32px #00000060;
+  display:none;max-height:220px;overflow-y:auto;
+}
+.ac-dropdown.open{display:block;}
+.ac-item{
+  padding:.6rem .9rem;font-size:.85rem;cursor:pointer;
+  border-bottom:1px solid var(--border);
+  transition:background .1s;
+  display:flex;align-items:center;justify-content:space-between;gap:.5rem;
+}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.focused{background:var(--cb);}
+.ac-item .ai-name{flex:1;}
+.ac-item .ai-code{font-family:var(--mono);font-size:.68rem;color:var(--sub);}
+.ac-item mark{background:color-mix(in srgb,var(--cc) 35%,transparent);color:var(--cc);border-radius:2px;}
+
+/* ── PROD ROW ── */
+.prod-row{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:12px;padding:.85rem .95rem;
+  display:flex;flex-direction:column;gap:.7rem;
+  animation:fadeUp .18s var(--ease);
+  position:relative;
+}
+.prod-row::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:3px;border-radius:3px 0 0 3px;
+  background:var(--cc);opacity:.5;
+}
+.pr-hdr{display:flex;align-items:center;justify-content:space-between;}
+.pr-num{
+  font-size:.65rem;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--cc);
+  background:var(--cb);padding:.18rem .55rem;border-radius:50px;
+}
+.pr-status{
+  font-size:.68rem;font-weight:600;padding:.18rem .55rem;border-radius:50px;
+  display:none;
+}
+.pr-status.vencido{background:#ff4d6a18;color:var(--red);display:inline-flex;align-items:center;gap:.3rem;}
+.pr-status.proximo{background:#f5a62318;color:var(--gold);display:inline-flex;align-items:center;gap:.3rem;}
+.pr-status.ok{background:#10d98a18;color:var(--green);display:inline-flex;align-items:center;gap:.3rem;}
+.btn-rm{
+  width:26px;height:26px;border-radius:7px;
+  background:var(--faint);color:var(--red);
+  display:grid;place-items:center;font-size:.78rem;
+  transition:background .15s;flex-shrink:0;
+}
+.btn-rm:hover{background:#ff4d6a18;}
+.pg2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.pg1{display:grid;grid-template-columns:1fr;gap:.6rem;}
+.prod-row input,.prod-row select{font-size:.82rem;padding:.55rem .75rem;}
+
+/* ── ADD ROW BTN ── */
+.btn-add{
+  display:flex;align-items:center;justify-content:center;gap:.45rem;
+  width:100%;padding:.6rem;border-radius:var(--r2);
+  border:1.5px dashed var(--border2);
+  color:var(--sub);font-size:.8rem;font-weight:500;background:transparent;
+  transition:all .15s var(--ease);margin-top:.2rem;
+}
+.btn-add:hover{border-color:var(--cc);color:var(--cc);background:var(--cb);}
+
+/* ── TOGGLE ── */
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:.65rem .85rem;
+  background:var(--card2);border:1.5px solid var(--border);border-radius:var(--r2);
+  cursor:pointer;transition:border-color .15s;
+}
+.toggle-row:hover{border-color:var(--border2);}
+.toggle-label{font-size:.83rem;color:var(--text);}
+.tog{position:relative;width:44px;height:24px;flex-shrink:0;}
+.tog input{display:none;}
+.tog-track{
   position:absolute;inset:0;border-radius:50px;
   background:var(--border2);cursor:pointer;
-  transition:background var(--fast) var(--ease);
+  transition:background .2s;
 }
-.toggle-track::after{
+.tog-track::after{
   content:'';position:absolute;top:3px;left:3px;
-  width:20px;height:20px;background:#fff;border-radius:50%;
-  transition:transform var(--fast) var(--ease);
+  width:18px;height:18px;background:#fff;border-radius:50%;
+  transition:transform .2s var(--ease);
 }
-.toggle-switch input:checked~.toggle-track{background:var(--green);}
-.toggle-switch input:checked~.toggle-track::after{transform:translateX(20px);}
+.tog input:checked~.tog-track{background:var(--green);}
+.tog input:checked~.tog-track::after{transform:translateX(20px);}
 
-/* ── BUTTONS ─────────────────────────────── */
-.btn-wrap{padding:1rem 1rem 0;}
+/* ── MOTIVOS ── */
+.motivos-grid{display:flex;flex-direction:column;gap:.4rem;}
+.mot-item{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.55rem .8rem;border-radius:9px;
+  background:var(--card2);border:1.5px solid var(--border);
+  cursor:pointer;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.mot-item:hover{border-color:var(--cc);}
+.mot-item.sel{border-color:var(--cc);background:var(--cb);}
+.mot-ck{
+  width:18px;height:18px;border-radius:5px;border:2px solid var(--border2);
+  flex-shrink:0;display:grid;place-items:center;transition:all .15s;
+}
+.mot-item.sel .mot-ck{background:var(--cc);border-color:var(--cc);}
+.mot-item.sel .mot-ck::after{content:'✓';font-size:.62rem;color:#000;font-weight:800;}
+.mot-label{font-size:.82rem;}
+
+/* ── PRICE TABLE ── */
+.price-section{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;
+}
+.price-section-hdr{
+  display:flex;align-items:center;gap:.55rem;
+  padding:.65rem .9rem;border-bottom:1px solid var(--border);
+  font-size:.78rem;font-weight:600;
+  background:linear-gradient(to right,var(--cb),transparent);
+}
+.psb{padding:.2rem .6rem;border-radius:50px;font-size:.65rem;font-weight:700;}
+.psb-s{background:#10d98a18;color:var(--green);}
+.psb-b{background:#f5a62318;color:var(--gold);}
+.ptable{width:100%;border-collapse:collapse;}
+.ptable thead th{
+  font-size:.64rem;font-weight:700;letter-spacing:.07em;color:var(--muted);
+  text-transform:uppercase;padding:.55rem .75rem;text-align:left;
+  border-bottom:1px solid var(--border);
+}
+.ptable tbody td{padding:.5rem .75rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.ptable tbody tr:last-child td{border-bottom:none;}
+.ptable tbody tr:hover td{background:var(--faint);}
+.pname{font-size:.82rem;font-weight:500;}
+.pcode{font-family:var(--mono);font-size:.65rem;color:var(--sub);margin-top:.08rem;}
+.price-inp{
+  width:100%;background:var(--card);border:1.5px solid var(--border);
+  border-radius:8px;color:var(--text);padding:.42rem .6rem;
+  font-size:.82rem;font-family:var(--mono);text-align:right;
+  outline:none;-webkit-appearance:none;
+  transition:border-color .15s,box-shadow .15s;
+  min-width:90px;
+}
+.price-inp:focus{border-color:var(--cc);box-shadow:0 0 0 2px color-mix(in srgb,var(--cc) 18%,transparent);}
+.price-inp.err{border-color:var(--red)!important;background:#ff4d6a10;}
+.price-inp.ok{border-color:var(--green);}
+.gs{font-size:.66rem;color:var(--muted);margin-right:.25rem;}
+
+/* ── DIVIDER ── */
+.div{border:none;border-top:1px solid var(--border);margin:.1rem 0;}
+
+/* ── BUTTONS ── */
+.btn-wrap{padding:.7rem .85rem 0;}
 .btn{
-  width:100%;padding:.9rem 1.5rem;border-radius:12px;
-  font-size:.95rem;font-weight:600;
-  display:flex;align-items:center;justify-content:center;gap:.5rem;
-  transition:all var(--fast) var(--ease);
+  width:100%;padding:.85rem 1.5rem;border-radius:12px;
+  font-size:.9rem;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:.45rem;
+  transition:all .15s var(--ease);letter-spacing:.01em;
 }
 .btn-primary{
-  background:linear-gradient(135deg,var(--client-color),var(--client-color)cc);
-  color:#000;box-shadow:0 4px 20px var(--client-color)30;
+  background:linear-gradient(135deg,var(--cc),color-mix(in srgb,var(--cc) 80%,#000));
+  color:#000;box-shadow:0 4px 24px color-mix(in srgb,var(--cc) 28%,transparent);
 }
-.btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px);}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px);}
 .btn-primary:active{transform:translateY(0);}
-.btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;filter:none;}
-.btn-ghost{
-  border:1.5px solid var(--border2);color:var(--muted);background:transparent;
-}
-.btn-ghost:hover{border-color:var(--muted);color:var(--text);}
-.btn-wrap+.btn-wrap{padding-top:.5rem;}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none;}
+.btn-ghost{border:1.5px solid var(--border2);color:var(--sub);}
+.btn-ghost:hover{border-color:var(--sub);color:var(--text);}
 
-/* ── ERROR MSG ───────────────────────────── */
+/* ── ERROR ── */
 .err-msg{
   display:none;align-items:center;gap:.5rem;
-  padding:.7rem 1rem;border-radius:10px;
-  background:#ef444418;border:1px solid #ef444444;
-  font-size:.82rem;color:#f87171;margin:.75rem 1rem 0;
+  padding:.65rem .9rem;border-radius:var(--r2);
+  background:#ff4d6a14;border:1px solid #ff4d6a40;
+  font-size:.8rem;color:#ff8096;margin:.65rem .85rem 0;
 }
 .err-msg.show{display:flex;}
 
-/* ── SUCCESS ─────────────────────────────── */
-.success-screen{
-  display:none;flex-direction:column;align-items:center;
-  gap:1rem;padding:2.5rem 1.5rem;text-align:center;
-}
-.success-screen.active{display:flex;animation:fadeUp var(--mid) var(--ease);}
-.success-icon{
-  width:80px;height:80px;border-radius:50%;
-  background:linear-gradient(135deg,var(--green),#16a34a);
-  display:grid;place-items:center;font-size:2rem;
-}
-.success-title{font-size:1.3rem;font-weight:700;color:var(--text);}
-.success-sub{font-size:.85rem;color:var(--muted);line-height:1.6;}
-
-/* ── VALIDATION TAG ──────────────────────── */
-.val-tag{
-  font-size:.68rem;padding:.2rem .55rem;border-radius:5px;
-  font-weight:600;margin-left:.4rem;
-}
-.val-tag.error{background:#ef444415;color:var(--red);}
-.val-tag.ok{background:#22c55e15;color:var(--green);}
-
-/* ── INFO BOX ────────────────────────────── */
+/* ── INFO BOX ── */
 .info-box{
-  display:flex;align-items:center;gap:.6rem;
-  padding:.65rem .9rem;border-radius:10px;
+  display:flex;align-items:center;gap:.5rem;
+  padding:.6rem .85rem;border-radius:var(--r2);
   background:var(--faint);border:1px solid var(--border);
-  font-size:.78rem;color:var(--muted);margin:.75rem 1rem 0;
+  font-size:.75rem;color:var(--sub);margin:.65rem .85rem 0;
 }
 
-/* ── DIVIDER ─────────────────────────────── */
-.divider{border:none;border-top:1px solid var(--border);margin:.25rem 0;}
+/* ── SUCCESS ── */
+.success-scr{
+  display:none;flex-direction:column;align-items:center;
+  gap:1rem;padding:3rem 1.5rem;text-align:center;
+}
+.success-scr.active{display:flex;animation:fadeUp .25s var(--ease);}
+.suc-icon{
+  width:76px;height:76px;border-radius:50%;
+  background:linear-gradient(135deg,var(--green),#059669);
+  display:grid;place-items:center;font-size:1.8rem;
+  box-shadow:0 0 40px #10d98a30;
+}
+.suc-title{font-size:1.25rem;font-weight:700;}
+.suc-sub{font-size:.82rem;color:var(--sub);line-height:1.6;max-width:320px;}
 
-/* ── MOBILE ──────────────────────────────── */
+/* ── SECTION DIVIDER ── */
+.sec-divider{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.5rem .85rem 0;
+}
+.sec-divider span{font-size:.68rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;}
+.sec-divider::before,.sec-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── MOBILE ── */
 @media(max-width:400px){
-  .cols-2{grid-template-columns:1fr;}
-  .cols-3{grid-template-columns:1fr 1fr;}
-  #app{padding-bottom:4rem;}
+  .pg2{grid-template-columns:1fr;}
+  .ptable thead th:nth-child(n+3){display:none;}
 }
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- ─── HEADER ─────────────────────────── -->
-  <header class="app-header">
-    <div class="logo">+M</div>
-    <div class="header-text">
-      <div class="title">Relevamiento de Campo</div>
-      <div class="sub">Sistema Unificado · +Marka</div>
-    </div>
-    <div class="header-client-badge" id="client-badge">—</div>
-  </header>
+<!-- HEADER -->
+<header class="hdr">
+  <div class="logo" id="logo">+M</div>
+  <div class="hdr-txt">
+    <div class="t">Relevamiento de Campo</div>
+    <div class="s">Sistema Unificado · +Marka</div>
+  </div>
+  <div class="client-pill" id="cpill">—</div>
+</header>
 
-  <!-- ─── STEP PROGRESS ──────────────────── -->
-  <div class="step-progress" id="step-progress" style="display:none">
-    <div class="step-item active" id="step-0">
-      <div class="step-dot">1</div>
-      <div class="step-label">Cédula</div>
+<!-- STEPS -->
+<div class="steps" id="steps">
+  <div class="step active" id="st0"><div class="sdot">1</div><div class="slabel">Cédula</div></div>
+  <div class="sline"></div>
+  <div class="step" id="st1"><div class="sdot">2</div><div class="slabel">PDV</div></div>
+  <div class="sline"></div>
+  <div class="step" id="st2"><div class="sdot">3</div><div class="slabel">Datos</div></div>
+  <div class="sline"></div>
+  <div class="step" id="st3"><div class="sdot">4</div><div class="slabel">Envío</div></div>
+</div>
+
+<!-- SCR 1: CEDULA -->
+<div class="scr active" id="scr-cedula">
+  <div class="card" style="margin-top:1.4rem">
+    <div class="card-hdr">
+      <div class="card-icon">👋</div>
+      <div><div class="card-title">Bienvenido</div><div class="card-sub">Ingresá tu cédula para comenzar</div></div>
     </div>
-    <div class="step-line"></div>
-    <div class="step-item" id="step-1">
-      <div class="step-dot">2</div>
-      <div class="step-label">PDV</div>
-    </div>
-    <div class="step-line"></div>
-    <div class="step-item" id="step-2">
-      <div class="step-dot">3</div>
-      <div class="step-label">Datos</div>
-    </div>
-    <div class="step-line"></div>
-    <div class="step-item" id="step-3">
-      <div class="step-dot">4</div>
-      <div class="step-label">Envío</div>
+    <div class="card-body">
+      <div class="field">
+        <label>Cédula de Identidad <span class="req">*</span></label>
+        <input class="ci-input" type="text" id="ci-inp" inputmode="numeric" maxlength="10" placeholder="_ _ _ _ _ _ _ _" autocomplete="off"/>
+      </div>
+      <button class="btn btn-primary" onclick="validarCI()">Verificar →</button>
     </div>
   </div>
+  <div class="err-msg" id="err-ci">⚠️ <span id="err-ci-txt">Cédula no encontrada.</span></div>
+  <div class="info-box">ℹ️ Tus datos y PDVs asignados se cargan automáticamente.</div>
+</div>
 
-  <!-- ═══ SCREEN 1: CÉDULA ═══════════════ -->
-  <div class="screen active" id="scr-cedula">
-    <div class="section-block" style="margin-top:1.5rem">
-      <div class="section-header">
-        <span class="section-icon">👋</span>
+<!-- LOADER CI -->
+<div class="loader" id="ldr-ci">
+  <div class="spin"></div>
+  <div class="lm">Verificando cédula…</div>
+  <div class="ls">Consultando base de datos</div>
+</div>
+
+<!-- SCR 2: PDV -->
+<div class="scr" id="scr-pdv">
+  <div class="card" style="margin-top:.85rem">
+    <div class="card-hdr">
+      <div class="card-icon">📍</div>
+      <div><div class="card-title">Punto de Venta</div><div class="card-sub">¿Qué local vas a relevar hoy?</div></div>
+    </div>
+    <div class="card-body">
+      <div class="rel-chip">
+        <div class="rel-av" id="rel-av">--</div>
         <div>
-          <div class="section-title">Bienvenido</div>
-          <div class="section-sub">Ingresá tu cédula para comenzar</div>
+          <div class="rel-name" id="rel-name">—</div>
+          <div class="rel-meta" id="rel-ci">—</div>
+          <div class="rel-client" id="rel-client">—</div>
         </div>
       </div>
-      <div class="section-body">
-        <div class="field">
-          <label>Cédula de Identidad <span class="req">*</span></label>
-          <input class="cedula-input" type="text" id="cedula-input"
-            inputmode="numeric" maxlength="10"
-            placeholder="_ _ _ _ _ _ _ _"
-            autocomplete="off"/>
-        </div>
-        <div class="btn-wrap" style="padding:0">
-          <button class="btn btn-primary" onclick="validarCedula()">Verificar →</button>
-        </div>
+      <div class="field">
+        <label>Seleccioná el local <span class="req">*</span></label>
+        <div class="pdv-grid" id="pdv-grid"></div>
+      </div>
+      <div class="field">
+        <label>Fecha de visita <span class="req">*</span></label>
+        <input type="date" id="fecha-inp"/>
       </div>
     </div>
-    <div class="err-msg" id="err-cedula">⚠️ <span id="err-cedula-txt">Cédula no encontrada.</span></div>
-    <div class="info-box">ℹ️ Tus datos se cargan automáticamente desde la base de datos.</div>
   </div>
+  <div class="err-msg" id="err-pdv">⚠️ <span>Seleccioná un local para continuar.</span></div>
+  <div class="btn-wrap"><button class="btn btn-primary" onclick="irAFormulario()">Continuar →</button></div>
+  <div class="btn-wrap"><button class="btn btn-ghost" onclick="volverCI()">← Volver</button></div>
+</div>
 
-  <!-- ─── LOADER VALIDACIÓN ───────────────── -->
-  <div class="loader-screen" id="loader-cedula">
-    <div class="spinner"></div>
-    <div class="loader-msg">Verificando cédula…</div>
-    <div class="loader-sub">Consultando base de datos</div>
+<!-- LOADER FORM -->
+<div class="loader" id="ldr-form">
+  <div class="spin"></div>
+  <div class="lm" id="ldr-form-msg">Cargando formulario…</div>
+  <div class="ls">Preparando datos</div>
+</div>
+
+<!-- SCR 3: FORMULARIO -->
+<div class="scr" id="scr-form">
+  <div id="form-content"></div>
+  <div class="err-msg" id="err-form">⚠️ <span id="err-form-txt">Completá los campos obligatorios.</span></div>
+  <div class="btn-wrap"><button class="btn btn-primary" onclick="enviar()">✓ Enviar Relevamiento</button></div>
+  <div class="btn-wrap"><button class="btn btn-ghost" onclick="volverPDV()">← Volver</button></div>
+</div>
+
+<!-- LOADER SAVE -->
+<div class="loader" id="ldr-save">
+  <div class="spin"></div>
+  <div class="lm">Guardando datos…</div>
+  <div class="ls">Enviando a Google Sheets</div>
+</div>
+
+<!-- SCR 4: EXITO -->
+<div class="success-scr" id="scr-ok">
+  <div class="suc-icon">✓</div>
+  <div class="suc-title">¡Relevamiento enviado!</div>
+  <div class="suc-sub" id="suc-detail">Los datos fueron guardados correctamente.</div>
+  <div class="btn-wrap" style="width:100%;max-width:320px">
+    <button class="btn btn-primary" onclick="reset()">+ Nuevo Relevamiento</button>
   </div>
-
-  <!-- ═══ SCREEN 2: PDV ══════════════════ -->
-  <div class="screen" id="scr-pdv">
-    <div class="section-block" style="margin-top:1rem">
-      <div class="section-header">
-        <span class="section-icon">📍</span>
-        <div>
-          <div class="section-title">Punto de Venta</div>
-          <div class="section-sub">Confirmá el local que vas a relevar</div>
-        </div>
-      </div>
-      <div class="section-body">
-        <!-- Relevador chip -->
-        <div class="relevador-chip" id="rel-chip">
-          <div class="rel-avatar" id="rel-avatar">--</div>
-          <div>
-            <div class="rel-name" id="rel-name">Cargando…</div>
-            <div class="rel-ci" id="rel-ci"></div>
-            <div class="rel-pdv" id="rel-pdv-info"></div>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Seleccioná tu Punto de Venta <span class="req">*</span></label>
-          <select id="pdv-select">
-            <option value="">— Seleccionar —</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Fecha de visita <span class="req">*</span></label>
-          <input type="date" id="fecha-visita"/>
-        </div>
-      </div>
-    </div>
-    <div class="err-msg" id="err-pdv">⚠️ <span>Seleccioná un punto de venta para continuar.</span></div>
-    <div class="btn-wrap">
-      <button class="btn btn-primary" onclick="irAFormulario()">Continuar →</button>
-    </div>
-    <div class="btn-wrap">
-      <button class="btn btn-ghost" onclick="volverCedula()">← Volver</button>
-    </div>
-  </div>
-
-  <!-- ─── LOADER PRODUCTOS ─────────────────── -->
-  <div class="loader-screen" id="loader-productos">
-    <div class="spinner"></div>
-    <div class="loader-msg" id="loader-prod-msg">Cargando formulario…</div>
-    <div class="loader-sub" id="loader-prod-sub">Preparando datos del cliente</div>
-  </div>
-
-  <!-- ═══ SCREEN 3: FORMULARIO DINÁMICO ═══ -->
-  <div class="screen" id="scr-form">
-    <!-- Contenido inyectado dinámicamente según cliente -->
-    <div id="form-content"></div>
-
-    <div class="err-msg" id="err-form">⚠️ <span id="err-form-txt">Completá los campos obligatorios.</span></div>
-
-    <div class="btn-wrap">
-      <button class="btn btn-primary" id="btn-submit" onclick="enviarFormulario()">
-        ✓ Enviar Relevamiento
-      </button>
-    </div>
-    <div class="btn-wrap">
-      <button class="btn btn-ghost" onclick="volverPDV()">← Volver</button>
-    </div>
-  </div>
-
-  <!-- ─── LOADER GUARDANDO ─────────────────── -->
-  <div class="loader-screen" id="loader-save">
-    <div class="spinner"></div>
-    <div class="loader-msg">Guardando datos…</div>
-    <div class="loader-sub">Enviando a Google Sheets</div>
-  </div>
-
-  <!-- ═══ SCREEN 4: ÉXITO ════════════════ -->
-  <div class="success-screen" id="scr-success">
-    <div class="success-icon">✓</div>
-    <div class="success-title">¡Relevamiento enviado!</div>
-    <div class="success-sub" id="success-detail">Los datos fueron guardados correctamente.</div>
-    <div class="btn-wrap" style="width:100%;max-width:340px">
-      <button class="btn btn-primary" onclick="nuevoRelevamiento()">+ Nuevo Relevamiento</button>
-    </div>
-  </div>
+</div>
 
 </div><!-- /app -->
-
 <script>
-// ══════════════════════════════════════════════════════════
-// CONFIGURACIÓN — Reemplazá con tu URL de Apps Script
-// ══════════════════════════════════════════════════════════
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxbNBrR-3MUpfdzTWmSLr55zbmf3FOVP8ICkYZtOu8cLlGU0JCoPKoCSJ3kbxkEPYRww/exec';
+// ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxbNBrR-3MUpfdzTWmSLr55zbmf3FOVP8ICkYZtOu8cLlGU0JCoPKoCSJ3kbxkEPYRww/exec';
 
-// Colores por cliente
-const CLIENT_CONFIG = {
-  'frigomerc':       { color:'#f97316', bg:'#f9731618', label:'Frigomerc',       emoji:'🥩' },
-  'frutika':         { color:'#f59e0b', bg:'#f59e0b18', label:'Frutika',         emoji:'🍊' },
-  'santa_margarita': { color:'#22c55e', bg:'#22c55e18', label:'Santa Margarita', emoji:'🌿' },
+const CLIENTS = {
+  frigomerc:       { color:'#f97316', label:'Frigomerc',       emoji:'🥩' },
+  frutika:         { color:'#f5a623', label:'Frutika',         emoji:'🍊' },
+  santa_margarita: { color:'#10d98a', label:'Santa Margarita', emoji:'🌿' },
 };
 
-// Estado global
-const STATE = {
-  ci: '', relevador: null, pdv: null, fecha: '',
-  cliente: '', clienteKey: '',
-  productos: [], motivos: [],
-  rowCounters: {},
-  selectedMotivos: new Set(),
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  ci:'', rel:null, pdv:null, fecha:'',
+  clienteKey:'', cliente:'',
+  productos:[], motivos:[],
+  counters:{}, selectedMotivos:new Set(),
 };
 
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // UTILS
-// ══════════════════════════════════════════════════════════
-const $ = id => document.getElementById(id);
-const showOnly = id => {
-  ["scr-cedula","loader-cedula","scr-pdv","loader-productos","scr-form","loader-save","scr-success"]
-    .forEach(s => { const el = document.getElementById(s); if (el) el.classList.remove("active"); });
-  const t = document.getElementById(id);
-  if (t) t.classList.add("active");
-};
+// ═══════════════════════════════════════════════════════
+const $  = id => document.getElementById(id);
+const ALL_SCRS = ['scr-cedula','ldr-ci','scr-pdv','ldr-form','scr-form','ldr-save','scr-ok'];
 
-function showErr(id, msg) {
-  const el = $(id);
-  if (!el) return;
-  const span = el.querySelector('span') || el;
-  if (msg) span.textContent = msg;
+function show(id){
+  ALL_SCRS.forEach(s=>{ const e=$(s); if(e) e.classList.remove('active'); });
+  const t=$(id); if(t) t.classList.add('active');
+}
+
+function showErr(id, msg){
+  const el=$(id); if(!el) return;
+  const sp=el.querySelector('span'); if(sp&&msg) sp.textContent=msg;
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 5000);
+  setTimeout(()=>el.classList.remove('show'), 5000);
+}
+function hideErr(id){ $(id)?.classList.remove('show'); }
+
+function setTheme(key){
+  const cfg = CLIENTS[key] || { color:'#f5a623', label:key, emoji:'⭐' };
+  document.documentElement.style.setProperty('--cc', cfg.color);
+  document.documentElement.style.setProperty('--cb', cfg.color+'18');
+  $('cpill').textContent = cfg.emoji + ' ' + cfg.label;
+  $('cpill').style.display = 'inline-flex';
+  $('logo').style.background = `linear-gradient(135deg,${cfg.color},${cfg.color}99)`;
 }
 
-function hideErr(id) { $(id)?.classList.remove('show'); }
-
-function setClientTheme(key) {
-  const cfg = CLIENT_CONFIG[key] || { color:'#f59e0b', bg:'#f59e0b18', label:key, emoji:'⭐' };
-  document.documentElement.style.setProperty('--client-color', cfg.color);
-  document.documentElement.style.setProperty('--client-bg', cfg.bg);
-  const badge = $('client-badge');
-  badge.textContent = cfg.emoji + ' ' + cfg.label;
-  badge.style.display = 'inline-flex';
-}
-
-function setStep(n) {
-  $('step-progress').style.display = 'flex';
-  for (let i = 0; i < 4; i++) {
-    const el = $('step-' + i);
+function setStep(n){
+  $('steps').style.display = 'flex';
+  for(let i=0;i<4;i++){
+    const el=$('st'+i);
     el.classList.remove('active','done');
-    if (i < n) el.classList.add('done');
-    if (i === n) el.classList.add('active');
-    // Update done dots
-    if (i < n) el.querySelector('.step-dot').textContent = '✓';
-    else el.querySelector('.step-dot').textContent = i + 1;
+    const dot=el.querySelector('.sdot');
+    if(i<n){ el.classList.add('done'); dot.textContent='✓'; }
+    else { dot.textContent=i+1; if(i===n) el.classList.add('active'); }
   }
 }
 
-// ── JSONP helper — resuelve CORS con Google Apps Script ──
-function apiFetch(params) {
-  return new Promise((resolve, reject) => {
-    const cbName = '_cb' + Date.now() + Math.floor(Math.random() * 1e6);
-    const url = new URL(APPS_SCRIPT_URL);
-    Object.entries(params).forEach(([k, v]) => {
-      url.searchParams.set(k, typeof v === 'object' ? JSON.stringify(v) : v);
-    });
-    url.searchParams.set('callback', cbName);
-
-    const script = document.createElement('script');
-    const timer = setTimeout(() => {
-      cleanup();
-      reject(new Error('Timeout — verificá la conexión'));
-    }, 15000);
-
-    function cleanup() {
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-
-    window[cbName] = (data) => { cleanup(); resolve(data); };
-    script.onerror = () => { cleanup(); reject(new Error('Error de red')); };
-    script.src = url.toString();
-    document.head.appendChild(script);
+// JSONP
+function apiFetch(params){
+  return new Promise((resolve,reject)=>{
+    const cb='_cb'+Date.now()+Math.floor(Math.random()*1e6);
+    const url=new URL(SCRIPT_URL);
+    Object.entries(params).forEach(([k,v])=>
+      url.searchParams.set(k, typeof v==='object'?JSON.stringify(v):v));
+    url.searchParams.set('callback',cb);
+    const sc=document.createElement('script');
+    const timer=setTimeout(()=>{ cleanup(); reject(new Error('Timeout')); },15000);
+    function cleanup(){ clearTimeout(timer); delete window[cb]; sc.parentNode?.removeChild(sc); }
+    window[cb]=(data)=>{ cleanup(); resolve(data); };
+    sc.onerror=()=>{ cleanup(); reject(new Error('Error de red')); };
+    sc.src=url.toString();
+    document.head.appendChild(sc);
   });
 }
 
-// ══════════════════════════════════════════════════════════
-// STEP 1: VALIDAR CÉDULA
-// ══════════════════════════════════════════════════════════
-async function validarCedula() {
-  const ci = $('cedula-input').value.trim();
-  hideErr('err-cedula');
-  if (!ci || ci.length < 5) {
-    showErr('err-cedula', 'Ingresá un número de cédula válido (mínimo 5 dígitos).');
-    return;
-  }
-  STATE.ci = ci;
-  showOnly('loader-cedula');
-  try {
-    const data = await apiFetch({ action: 'getRelevador', ci });
-    if (!data.found) {
-      showOnly('scr-cedula');
-      showErr('err-cedula', data.error || 'Cédula no encontrada. Contactá al administrador.');
-      return;
-    }
-    STATE.relevador = data.relevador;
-    STATE.clienteKey = data.relevador.clienteKey;
-    STATE.cliente = data.relevador.cliente;
-    setClientTheme(STATE.clienteKey);
-    renderPDVScreen(data.relevador, data.pdvs);
-    setStep(1);
-    showOnly('scr-pdv');
-  } catch(e) {
-    showOnly('scr-cedula');
-    showErr('err-cedula', 'Error de conexión. Verificá el internet e intentá de nuevo.');
-    console.error(e);
-  }
+// ═══════════════════════════════════════════════════════
+// STEP 1 — CÉDULA
+// ═══════════════════════════════════════════════════════
+async function validarCI(){
+  const ci=$('ci-inp').value.trim();
+  hideErr('err-ci');
+  if(!ci||ci.length<5){ showErr('err-ci','Ingresá una cédula válida (mínimo 5 dígitos).'); return; }
+  S.ci=ci; show('ldr-ci');
+  try{
+    const d=await apiFetch({action:'getRelevador',ci});
+    if(!d.found){ show('scr-cedula'); showErr('err-ci', d.error||'Cédula no encontrada.'); return; }
+    S.rel=d.relevador; S.clienteKey=d.relevador.clienteKey; S.cliente=d.relevador.cliente;
+    setTheme(S.clienteKey);
+    renderPDV(d.relevador, d.pdvs);
+    setStep(1); show('scr-pdv');
+  } catch(e){ show('scr-cedula'); showErr('err-ci','Error de conexión. Verificá el internet.'); }
 }
 
-// ══════════════════════════════════════════════════════════
-// STEP 2: PANTALLA PDV
-// ══════════════════════════════════════════════════════════
-function renderPDVScreen(rel, pdvs) {
-  const initials = rel.nombre.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-  $('rel-avatar').textContent = initials;
-  $('rel-name').textContent = rel.nombre;
-  $('rel-ci').textContent = 'CI: ' + STATE.ci;
-  $('rel-pdv-info').textContent = CLIENT_CONFIG[STATE.clienteKey]?.label || STATE.cliente;
+// ═══════════════════════════════════════════════════════
+// STEP 2 — PDV
+// ═══════════════════════════════════════════════════════
+function renderPDV(rel, pdvs){
+  const init=rel.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  $('rel-av').textContent=init;
+  $('rel-name').textContent=rel.nombre;
+  $('rel-ci').textContent='CI: '+S.ci;
+  $('rel-client').textContent=(CLIENTS[S.clienteKey]?.label||S.cliente);
 
-  const sel = $('pdv-select');
-  sel.innerHTML = '<option value="">— Seleccionar PDV —</option>';
-  (pdvs || []).forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.pdv;
-    opt.dataset.cadena = p.cadena || '';
-    opt.textContent = p.pdv + (p.cadena ? ' · ' + p.cadena : '');
-    sel.appendChild(opt);
+  const grid=$('pdv-grid');
+  grid.innerHTML='';
+  (pdvs||[]).forEach(p=>{
+    const isBig=(p.cadena||'').toUpperCase().includes('BIGGIE')||(p.cadena||'').toUpperCase().includes('BIGI');
+    const badgeClass=isBig?'psb psb-b':'psb psb-s';
+    const badgeText=isBig?'BigGie':'Supermercado';
+    const div=document.createElement('div');
+    div.className='pdv-card'; div.dataset.pdv=p.pdv; div.dataset.cadena=p.cadena||'';
+    div.innerHTML=`
+      <div class="pdv-dot"></div>
+      <div class="pdv-info">
+        <div class="pi-name">${p.pdv}</div>
+        ${p.cadena?`<div class="pi-cadena">${p.cadena}</div>`:''}
+      </div>
+      <span class="${badgeClass}">${badgeText}</span>`;
+    div.onclick=()=>selectPDV(div, p);
+    grid.appendChild(div);
   });
-  // Si tiene un solo PDV, preseleccionar
-  if (pdvs?.length === 1) sel.value = pdvs[0].pdv;
 
-  // Fecha hoy por defecto
-  const today = new Date().toISOString().split('T')[0];
-  $('fecha-visita').value = today;
+  if(pdvs?.length===1) selectPDV(grid.firstChild, pdvs[0]);
+  $('fecha-inp').value=new Date().toISOString().split('T')[0];
 }
 
-async function irAFormulario() {
+function selectPDV(el, p){
+  document.querySelectorAll('.pdv-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  S.pdv=p;
+}
+
+async function irAFormulario(){
   hideErr('err-pdv');
-  const pdvSel = $('pdv-select');
-  const fecha = $('fecha-visita').value;
-  if (!pdvSel.value) { showErr('err-pdv', 'Seleccioná un punto de venta para continuar.'); return; }
-  if (!fecha) { showErr('err-pdv', 'Seleccioná la fecha de visita.'); return; }
-
-  const opt = pdvSel.options[pdvSel.selectedIndex];
-  STATE.pdv = { nombre: pdvSel.value, cadena: opt.dataset.cadena || '' };
-  STATE.fecha = fecha;
-
-  $('loader-prod-msg').textContent = 'Cargando formulario de ' + (CLIENT_CONFIG[STATE.clienteKey]?.label || STATE.cliente) + '…';
-  $('loader-prod-sub').textContent = 'Obteniendo productos y configuración';
-  showOnly('loader-productos');
-
-  try {
-    const data = await apiFetch({ action: 'getFormData', clienteKey: STATE.clienteKey });
-    STATE.productos = data.productos || [];
-    STATE.motivos = data.motivos || [];
-    STATE.rowCounters = {};
-    renderFormulario();
-    setStep(2);
-    showOnly('scr-form');
-  } catch(e) {
-    STATE.productos = [];
-    STATE.motivos = [];
-    renderFormulario();
-    setStep(2);
-    showOnly('scr-form');
-    console.warn('No se pudieron cargar productos:', e);
-  }
+  if(!S.pdv){ showErr('err-pdv','Seleccioná un local para continuar.'); return; }
+  const fecha=$('fecha-inp').value;
+  if(!fecha){ showErr('err-pdv','Seleccioná la fecha de visita.'); return; }
+  S.fecha=fecha;
+  $('ldr-form-msg').textContent='Cargando formulario de '+(CLIENTS[S.clienteKey]?.label||S.cliente)+'…';
+  show('ldr-form');
+  try{
+    const d=await apiFetch({action:'getFormData',clienteKey:S.clienteKey});
+    S.productos=d.productos||[]; S.motivos=d.motivos||[];
+  } catch(e){ S.productos=[]; S.motivos=[]; }
+  S.counters={};
+  renderForm(); setStep(2); show('scr-form');
 }
 
-function volverCedula() {
-  setStep(0);
-  $('step-progress').style.display = 'none';
-  $('client-badge').style.display = 'none';
-  showOnly('scr-cedula');
+function volverCI(){ setStep(0); $('steps').style.display='none'; $('cpill').style.display='none'; show('scr-cedula'); }
+function volverPDV(){ setStep(1); show('scr-pdv'); }
+
+// ═══════════════════════════════════════════════════════
+// STEP 3 — FORMULARIOS POR CLIENTE
+// ═══════════════════════════════════════════════════════
+function renderForm(){
+  const c=$('form-content'); c.innerHTML='';
+  if(S.clienteKey==='frigomerc')       renderFrigomerc(c);
+  else if(S.clienteKey==='frutika')    renderFrutika(c);
+  else if(S.clienteKey==='santa_margarita') renderSM(c);
+  else c.innerHTML='<div class="info-box" style="margin:.85rem">⚠️ Cliente sin formulario configurado.</div>';
 }
 
-function volverPDV() {
-  setStep(1);
-  showOnly('scr-pdv');
-}
+// ── FRIGOMERC ─────────────────────────────────────────
+function renderFrigomerc(c){
+  // Detectar tipo por cadena del PDV seleccionado
+  const cadena=(S.pdv?.cadena||'').toUpperCase();
+  const isBig=cadena.includes('BIGGIE')||cadena.includes('BIGI');
+  window._frigType = isBig ? 'envasados' : 'carniceria';
 
-// ══════════════════════════════════════════════════════════
-// STEP 3: FORMULARIO DINÁMICO POR CLIENTE
-// ══════════════════════════════════════════════════════════
-function renderFormulario() {
-  const container = $('form-content');
-  const k = STATE.clienteKey;
-  if (k === 'frigomerc') renderFrigomerc(container);
-  else if (k === 'frutika') renderFrutika(container);
-  else if (k === 'santa_margarita') renderSantaMargarita(container);
-  else container.innerHTML = '<div class="info-box" style="margin:1rem">⚠️ Cliente sin formulario configurado.</div>';
-}
-
-// ── FRIGOMERC ─────────────────────────────────────────────
-function renderFrigomerc(c) {
-  // Detectar si el PDV tiene "biggie" o no (basado en cadena)
-  const cadena = (STATE.pdv?.cadena || '').toUpperCase();
-  const esBiggie = cadena.includes('BIGGIE') || cadena.includes('BIGI');
-  const esSuper = !esBiggie || true; // siempre tiene super
-
-  // Separar productos por formulario
-  const prods_envasados = STATE.productos.filter(p => p.formulario === 'envasados' || !p.formulario);
-  const prods_carniz = STATE.productos.filter(p => p.formulario === 'carniceria');
-
-  c.innerHTML = `
-    <!-- Carnicería / Envasados selector -->
-    <div class="section-block" style="margin-top:1rem">
-      <div class="section-header">
-        <span class="section-icon">🥩</span>
-        <div>
-          <div class="section-title">Frigomerc · Tipo de relevamiento</div>
-          <div class="section-sub">${CLIENT_CONFIG.frigomerc.emoji} ${STATE.pdv?.nombre}</div>
-        </div>
-      </div>
-      <div class="section-body">
-        <div class="field">
-          <label>Formulario a completar <span class="req">*</span></label>
-          <select id="frig-tipo" onchange="renderFrigPrices()">
-            <option value="">— Seleccionar —</option>
-            <option value="envasados">Envasados (Super + Biggie)</option>
-            <option value="carniceria">Carnicería (Solo Supermercado)</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div id="frig-prices-container"></div>
-    <div class="section-block" style="margin-top:1rem">
-      <div class="section-header">
-        <span class="section-icon">📝</span>
-        <div><div class="section-title">Observaciones</div></div>
-      </div>
-      <div class="section-body">
-        <textarea id="obs-frig" placeholder="Observaciones adicionales…" rows="3"></textarea>
-      </div>
-    </div>`;
-}
-
-function renderFrigPrices() {
-  const tipo = $('frig-tipo')?.value;
-  const container = $('frig-prices-container');
-  if (!tipo || !container) return;
-
-  const prods = STATE.productos.filter(p => {
-    if (tipo === 'envasados') return p.formulario === 'envasados' || !p.formulario || p.formulario === '';
-    if (tipo === 'carniceria') return p.formulario === 'carniceria';
-    return false;
+  const prods = S.productos.filter(p=>{
+    if(isBig) return p.formulario==='envasados'||!p.formulario||p.formulario==='';
+    else return p.formulario==='carniceria';
   });
+  window._frigProds = prods;
 
-  const showBiggie = tipo === 'envasados';
+  const cols = isBig
+    ? `<th>Producto</th><th>Super Regular</th><th>Super Oferta</th><th>Biggie Regular</th><th>Biggie Oferta</th>`
+    : `<th>Producto</th><th>Precio Regular</th><th>Precio Oferta</th>`;
 
-  const tableRows = prods.map((p, i) => `
-    <tr>
+  const rows = prods.map((p,i)=>`
+    <tr id="frig-row-${i}">
       <td>
-        <div class="prod-name">${p.nombre}</div>
-        ${p.codigo ? `<div class="prod-code">${p.codigo}</div>` : ''}
+        <div class="pname">${p.nombre}</div>
+        ${p.codigo?`<div class="pcode">${p.codigo}</div>`:''}
       </td>
-      <td class="price-cell">
-        <div style="display:flex;align-items:center">
-          <span class="gs-symbol">Gs</span>
-          <input class="price-input" type="number" id="super-reg-${i}"
-            placeholder="0" min="100" max="9999999" inputmode="numeric"
-            onblur="validarPrecio(this,'super-ofer-${i}')"
-            onchange="validarPrecio(this,'super-ofer-${i}')"/>
-        </div>
-      </td>
-      <td class="price-cell">
-        <div style="display:flex;align-items:center">
-          <span class="gs-symbol">Gs</span>
-          <input class="price-input" type="number" id="super-ofer-${i}"
-            placeholder="0" min="0" max="9999999" inputmode="numeric"
-            onblur="validarOferta(this,'super-reg-${i}')"
-            onchange="validarOferta(this,'super-reg-${i}')"/>
-        </div>
-      </td>
-      ${showBiggie ? `
-      <td class="price-cell">
-        <div style="display:flex;align-items:center">
-          <span class="gs-symbol">Gs</span>
-          <input class="price-input" type="number" id="biggie-reg-${i}"
-            placeholder="0" min="100" max="9999999" inputmode="numeric"
-            onblur="validarPrecio(this,'biggie-ofer-${i}')"
-            onchange="validarPrecio(this,'biggie-ofer-${i}')"/>
-        </div>
-      </td>
-      <td class="price-cell">
-        <div style="display:flex;align-items:center">
-          <span class="gs-symbol">Gs</span>
-          <input class="price-input" type="number" id="biggie-ofer-${i}"
-            placeholder="0" min="0" max="9999999" inputmode="numeric"
-            onblur="validarOferta(this,'biggie-reg-${i}')"
-            onchange="validarOferta(this,'biggie-reg-${i}')"/>
-        </div>
-      </td>` : ''}
+      <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
+        <input class="price-inp" type="number" id="sr-${i}" placeholder="0" min="100" max="9999999" inputmode="numeric"
+          onblur="valPrecio(this,'so-${i}')" onchange="valPrecio(this,'so-${i}')"/>
+      </div></td>
+      <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
+        <input class="price-inp" type="number" id="so-${i}" placeholder="0" min="0" max="9999999" inputmode="numeric"
+          onblur="valOferta(this,'sr-${i}')" onchange="valOferta(this,'sr-${i}')"/>
+      </div></td>
+      ${isBig?`
+      <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
+        <input class="price-inp" type="number" id="br-${i}" placeholder="0" min="100" max="9999999" inputmode="numeric"
+          onblur="valPrecio(this,'bo-${i}')" onchange="valPrecio(this,'bo-${i}')"/>
+      </div></td>
+      <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
+        <input class="price-inp" type="number" id="bo-${i}" placeholder="0" min="0" max="9999999" inputmode="numeric"
+          onblur="valOferta(this,'br-${i}')" onchange="valOferta(this,'br-${i}')"/>
+      </div></td>`:''}
     </tr>`).join('');
 
-  container.innerHTML = `
-    <div class="section-block" style="margin-top:1rem">
-      <div class="section-header">
-        <span class="section-icon">💰</span>
+  c.innerHTML=`
+    <div class="card" style="margin-top:.85rem">
+      <div class="card-hdr">
+        <div class="card-icon">🥩</div>
         <div>
-          <div class="section-title">Precios por Producto</div>
-          <div class="section-sub">Completá los precios que encontrás en góndola</div>
+          <div class="card-title">Frigomerc · ${isBig?'Envasados (Super + BigGie)':'Carnicería (Supermercado)'}</div>
+          <div class="card-sub">${S.pdv?.pdv||''} · ${S.pdv?.cadena||''}</div>
         </div>
       </div>
-      <div style="overflow-x:auto">
-        <!-- Supermercado -->
-        <div class="price-section">
-          <div class="price-section-header">
-            🏪 <span class="price-section-badge badge-super">Supermercado</span>
+      <div class="card-body" style="padding:0">
+        <div style="overflow-x:auto">
+          <div class="price-section" style="border:none;border-radius:0">
+            <div class="price-section-hdr">
+              💰 Precios en góndola
+              <span class="psb ${isBig?'psb-b':'psb-s'}">${isBig?'Envasados':'Carnicería'}</span>
+            </div>
+            <table class="ptable">
+              <thead><tr>${cols}</tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
           </div>
-          <table class="price-table">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Precio Regular</th>
-                <th>Precio Oferta</th>
-                ${showBiggie ? '<th>Biggie Regular</th><th>Biggie Oferta</th>' : ''}
-              </tr>
-            </thead>
-            <tbody id="price-tbody">${tableRows}</tbody>
-          </table>
         </div>
-      </div>
-    </div>`;
-
-  // Store products reference for submission
-  window._frigProds = prods;
-  window._frigTipo = tipo;
-  window._frigShowBiggie = showBiggie;
-}
-
-function validarPrecio(input, oferField) {
-  const v = parseFloat(input.value);
-  if (input.value && (v < 100 || v > 9999999)) {
-    input.classList.add('error');
-    input.classList.remove('ok');
-  } else if (input.value) {
-    input.classList.remove('error');
-    input.classList.add('ok');
-    // También validar oferta si ya tiene valor
-    const oferInput = $(oferField);
-    if (oferInput?.value) validarOferta(oferInput, input.id);
-  } else {
-    input.classList.remove('error','ok');
-  }
-}
-
-function validarOferta(oferInput, regField) {
-  const oferta = parseFloat(oferInput.value);
-  const regInput = $(regField);
-  const regular = parseFloat(regInput?.value || '0');
-  if (oferInput.value && oferta > 0) {
-    if (oferta >= regular && regular > 0) {
-      oferInput.classList.add('error');
-      oferInput.classList.remove('ok');
-    } else if (oferta < 100) {
-      oferInput.classList.add('error');
-      oferInput.classList.remove('ok');
-    } else {
-      oferInput.classList.remove('error');
-      oferInput.classList.add('ok');
-    }
-  } else {
-    oferInput.classList.remove('error','ok');
-  }
-}
-
-// ── FRUTIKA ───────────────────────────────────────────────
-function renderFrutika(c) {
-  c.innerHTML = `
-    <div class="section-block" style="margin-top:1rem">
-      <div class="section-header">
-        <span class="section-icon">🍊</span>
-        <div>
-          <div class="section-title">Frutika · Vencimientos</div>
-          <div class="section-sub">${STATE.pdv?.nombre}</div>
-        </div>
-      </div>
-      <div class="section-body">
-        <div class="toggle-row">
-          <span class="toggle-label">¿Hay productos próximos a vencer o vencidos?</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="fru-tiene-vencer" onchange="renderFrutikaVencer()"/>
-            <div class="toggle-track"></div>
-          </label>
-        </div>
-        <div id="fru-vencer-section" style="display:none"></div>
       </div>
     </div>
-    <div class="section-block" style="margin-top:1rem">
-      <div class="section-header">
-        <span class="section-icon">📝</span>
-        <div><div class="section-title">Observaciones</div></div>
-      </div>
-      <div class="section-body">
-        <textarea id="obs-fru" placeholder="Observaciones adicionales…" rows="3"></textarea>
+    <div class="card" style="margin-top:.85rem">
+      <div class="card-hdr"><div class="card-icon">📝</div><div><div class="card-title">Observaciones</div></div></div>
+      <div class="card-body">
+        <textarea id="obs-frig" placeholder="Observaciones adicionales…" rows="2"></textarea>
       </div>
     </div>`;
 }
 
-function renderFrutikaVencer() {
-  const tiene = $('fru-tiene-vencer')?.checked;
-  const sec = $('fru-vencer-section');
-  if (!sec) return;
-  if (!tiene) { sec.style.display = 'none'; sec.innerHTML = ''; return; }
-  sec.style.display = 'block';
-  sec.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:.75rem" id="fru-rows"></div>
-    <button class="btn-add-row" onclick="addFruRow()">＋ Agregar producto</button>`;
-  STATE.rowCounters.fru = 0;
+function valPrecio(inp, oferid){
+  const v=parseFloat(inp.value);
+  if(inp.value&&(v<100||v>9999999)){ inp.classList.add('err'); inp.classList.remove('ok'); }
+  else if(inp.value){ inp.classList.remove('err'); inp.classList.add('ok'); }
+  else { inp.classList.remove('err','ok'); }
+}
+function valOferta(inp, regid){
+  const o=parseFloat(inp.value), r=parseFloat($(regid)?.value||'0');
+  if(inp.value&&parseFloat(inp.value)>0){
+    if(o>=r&&r>0||o<100){ inp.classList.add('err'); inp.classList.remove('ok'); }
+    else { inp.classList.remove('err'); inp.classList.add('ok'); }
+  } else inp.classList.remove('err','ok');
+}
+
+// ── FRUTIKA ───────────────────────────────────────────
+function renderFrutika(c){
+  c.innerHTML=`
+    <div class="card" style="margin-top:.85rem">
+      <div class="card-hdr">
+        <div class="card-icon">🍊</div>
+        <div>
+          <div class="card-title">Frutika · Vencimientos</div>
+          <div class="card-sub">${S.pdv?.pdv||''}</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <label class="toggle-row" onclick="toggleFruVencer()">
+          <span class="toggle-label">¿Hay productos próximos a vencer o vencidos?</span>
+          <div class="tog"><input type="checkbox" id="fru-tog"/><div class="tog-track"></div></div>
+        </label>
+        <div id="fru-sec" style="display:none;flex-direction:column;gap:.65rem"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:.85rem">
+      <div class="card-hdr"><div class="card-icon">📝</div><div><div class="card-title">Observaciones</div></div></div>
+      <div class="card-body">
+        <textarea id="obs-fru" placeholder="Observaciones adicionales…" rows="2"></textarea>
+      </div>
+    </div>`;
+}
+
+function toggleFruVencer(){
+  const tog=$('fru-tog');
+  tog.checked=!tog.checked;
+  const sec=$('fru-sec');
+  if(!tog.checked){ sec.style.display='none'; sec.innerHTML=''; return; }
+  sec.style.display='flex';
+  sec.innerHTML=`<div id="fru-rows" style="display:flex;flex-direction:column;gap:.65rem"></div>
+    <button class="btn-add" onclick="addFruRow()">＋ Agregar producto</button>`;
+  S.counters.fru=0;
   addFruRow();
 }
 
-function addFruRow() {
-  const n = ++STATE.rowCounters.fru;
-  const uid = 'fru-row-' + n;
-  const opts = buildProdOpts();
-  const container = $('fru-rows');
-  const div = document.createElement('div');
-  div.className = 'prod-row'; div.id = uid;
-  div.innerHTML = `
-    <div class="prod-row-header">
-      <span class="prod-row-num">PRODUCTO #${n}</span>
-      <button class="btn-remove" onclick="removeRow('${uid}')">✕</button>
-    </div>
-    <div class="prod-grid cols-2" style="grid-template-columns:1fr">
-      <div class="field">
-        <select id="${uid}-prod">${opts}</select>
+function addFruRow(){
+  if(!S.counters.fru) S.counters.fru=0;
+  S.counters.fru++;
+  const n=S.counters.fru, uid='fr'+n;
+  const container=$('fru-rows'); if(!container) return;
+  const div=document.createElement('div');
+  div.className='prod-row'; div.id=uid;
+  div.innerHTML=`
+    <div class="pr-hdr">
+      <span class="pr-num">Producto #${n}</span>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <span class="pr-status" id="${uid}-status"></span>
+        <button class="btn-rm" onclick="rmRow('${uid}')">✕</button>
       </div>
     </div>
-    <div class="prod-grid cols-2">
-      <div class="field">
-        <label>Estado</label>
-        <select id="${uid}-estado">
-          <option value="">Seleccionar…</option>
-          <option>Próximo a vencer (≤7 días)</option>
-          <option>Próximo a vencer (≤30 días)</option>
-          <option>Vencido</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Fecha de vencimiento</label>
-        <input type="date" id="${uid}-vence"/>
-      </div>
+    <div class="field">
+      <label>Producto <span class="req">*</span></label>
+      ${buildACField(uid+'-prod', uid)}
     </div>
-    <div class="prod-grid cols-2">
+    <div class="pg2">
+      <div class="field">
+        <label>Fecha de vencimiento <span class="req">*</span></label>
+        <input type="date" id="${uid}-vence" onchange="calcEstado('${uid}')"/>
+      </div>
       <div class="field">
         <label>Cantidad (unidades)</label>
         <input type="number" id="${uid}-cant" min="1" placeholder="0" inputmode="numeric"/>
-      </div>
-      <div class="field">
-        <label>Lote / Código (opcional)</label>
-        <input type="text" id="${uid}-lote" placeholder="—"/>
       </div>
     </div>`;
   container.appendChild(div);
 }
 
-// ── SANTA MARGARITA ───────────────────────────────────────
-function renderSantaMargarita(c) {
-  c.innerHTML = `
-    <div class="section-block" style="margin-top:1rem">
-      <div class="section-header">
-        <span class="section-icon">🌿</span>
-        <div>
-          <div class="section-title">Santa Margarita · Relevamiento</div>
-          <div class="section-sub">${STATE.pdv?.nombre}</div>
-        </div>
-      </div>
-      <div class="section-body">
-
-        <!-- VENCIDOS -->
-        <div class="toggle-row">
-          <span class="toggle-label">¿Hay productos vencidos?</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="sm-tiene-vencidos" onchange="renderSMVencidos()"/>
-            <div class="toggle-track"></div>
-          </label>
-        </div>
-        <div id="sm-vencidos-sec" style="display:none"></div>
-
-        <hr class="divider"/>
-
-        <!-- PRÓXIMOS A VENCER -->
-        <div class="toggle-row">
-          <span class="toggle-label">¿Hay productos próximos a vencer?</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="sm-tiene-prox" onchange="renderSMProximos()"/>
-            <div class="toggle-track"></div>
-          </label>
-        </div>
-        <div id="sm-prox-sec" style="display:none"></div>
-
-        <hr class="divider"/>
-
-        <!-- AVERIADOS -->
-        <div class="toggle-row">
-          <span class="toggle-label">¿Hay productos averiados?</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="sm-tiene-aver" onchange="renderSMAveriados()"/>
-            <div class="toggle-track"></div>
-          </label>
-        </div>
-        <div id="sm-aver-sec" style="display:none"></div>
-
-      </div>
-    </div>
-    <div class="section-block" style="margin-top:1rem">
-      <div class="section-header">
-        <span class="section-icon">📝</span>
-        <div><div class="section-title">Observaciones</div></div>
-      </div>
-      <div class="section-body">
-        <textarea id="obs-sm" placeholder="Observaciones adicionales…" rows="3"></textarea>
-      </div>
-    </div>`;
-}
-
-function renderSMVencidos() {
-  const tiene = $('sm-tiene-vencidos')?.checked;
-  const sec = $('sm-vencidos-sec');
-  if (!sec) return;
-  if (!tiene) { sec.style.display = 'none'; sec.innerHTML = ''; return; }
-  sec.style.display = 'block';
-  sec.innerHTML = `<div style="display:flex;flex-direction:column;gap:.75rem;margin-top:.5rem" id="sm-venc-rows"></div>
-    <button class="btn-add-row" onclick="addSMRow('venc')">＋ Agregar producto vencido</button>`;
-  STATE.rowCounters.smVenc = 0;
-  addSMRow('venc');
-}
-
-function renderSMProximos() {
-  const tiene = $('sm-tiene-prox')?.checked;
-  const sec = $('sm-prox-sec');
-  if (!sec) return;
-  if (!tiene) { sec.style.display = 'none'; sec.innerHTML = ''; return; }
-  sec.style.display = 'block';
-  sec.innerHTML = `<div style="display:flex;flex-direction:column;gap:.75rem;margin-top:.5rem" id="sm-prox-rows"></div>
-    <button class="btn-add-row" onclick="addSMRow('prox')">＋ Agregar producto próximo</button>`;
-  STATE.rowCounters.smProx = 0;
-  addSMRow('prox');
-}
-
-function renderSMAveriados() {
-  const tiene = $('sm-tiene-aver')?.checked;
-  const sec = $('sm-aver-sec');
-  if (!sec) return;
-  if (!tiene) { sec.style.display = 'none'; sec.innerHTML = ''; return; }
-  sec.style.display = 'block';
-  const motivosHTML = STATE.motivos.length
-    ? `<div class="field"><label>Motivo(s) del daño <span class="req">*</span></label>
-        <div class="motivo-grid" id="sm-motivos">${
-          STATE.motivos.map((m, i) => `
-            <div class="motivo-item" id="mot-${i}" onclick="toggleMotivo(${i},'${m.replace(/'/g,"\\'")}')">
-              <div class="motivo-check"></div>
-              <span class="motivo-label">${m}</span>
-            </div>`).join('')
-        }</div></div>`
-    : '';
-  sec.style.display = 'block';
-  sec.innerHTML = `<div style="display:flex;flex-direction:column;gap:.75rem;margin-top:.5rem">
-    ${motivosHTML}
-    <div style="display:flex;flex-direction:column;gap:.75rem" id="sm-aver-rows"></div>
-    <button class="btn-add-row" onclick="addSMRow('aver')">＋ Agregar producto averiado</button>
-    </div>`;
-  STATE.selectedMotivos = new Set();
-  STATE.rowCounters.smAver = 0;
-  addSMRow('aver');
-}
-
-function toggleMotivo(idx, val) {
-  const el = $('mot-' + idx);
-  if (!el) return;
-  if (STATE.selectedMotivos.has(val)) {
-    STATE.selectedMotivos.delete(val);
-    el.classList.remove('selected');
+// Calcula vencido/próximo según la fecha ingresada
+function calcEstado(uid){
+  const fechaVal=$(uid+'-vence')?.value;
+  const statusEl=$(uid+'-status');
+  if(!statusEl) return;
+  if(!fechaVal){ statusEl.className='pr-status'; statusEl.textContent=''; return; }
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const vence=new Date(fechaVal+'T00:00:00');
+  if(vence<hoy){
+    statusEl.className='pr-status vencido'; statusEl.textContent='● Vencido';
   } else {
-    STATE.selectedMotivos.add(val);
-    el.classList.add('selected');
+    statusEl.className='pr-status proximo'; statusEl.textContent='● Próximo a vencer';
   }
 }
 
-function addSMRow(tipo) {
-  const key = 'sm' + tipo.charAt(0).toUpperCase() + tipo.slice(1);
-  if (!STATE.rowCounters[key]) STATE.rowCounters[key] = 0;
-  STATE.rowCounters[key]++;
-  const n = STATE.rowCounters[key];
-  const uid = `sm-${tipo}-${n}`;
-  const opts = buildProdOpts();
-  const containerId = tipo === 'venc' ? 'sm-venc-rows' : tipo === 'prox' ? 'sm-prox-rows' : 'sm-aver-rows';
-  const container = $(containerId);
-  if (!container) return;
-  const div = document.createElement('div');
-  div.className = 'prod-row'; div.id = uid;
-  const extraFields = tipo !== 'aver' ? `
-    <div class="prod-grid cols-2">
-      <div class="field">
-        <label>Fecha de vencimiento</label>
+// Determina estado para guardar
+function getEstado(fechaStr){
+  if(!fechaStr) return '';
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  const vence=new Date(fechaStr+'T00:00:00');
+  return vence<hoy ? 'Vencido' : 'Próximo a vencer';
+}
+
+// ── SANTA MARGARITA ───────────────────────────────────
+function renderSM(c){
+  c.innerHTML=`
+    <div class="card" style="margin-top:.85rem">
+      <div class="card-hdr">
+        <div class="card-icon">🌿</div>
+        <div>
+          <div class="card-title">Santa Margarita · Relevamiento</div>
+          <div class="card-sub">${S.pdv?.pdv||''}</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- VENCIDOS -->
+        <label class="toggle-row" onclick="togSM('venc')">
+          <span class="toggle-label">¿Hay productos <strong>vencidos</strong>?</span>
+          <div class="tog"><input type="checkbox" id="sm-tog-venc"/><div class="tog-track"></div></div>
+        </label>
+        <div id="sm-sec-venc" style="display:none;flex-direction:column;gap:.6rem"></div>
+        <hr class="div"/>
+        <!-- PROXIMOS -->
+        <label class="toggle-row" onclick="togSM('prox')">
+          <span class="toggle-label">¿Hay productos <strong>próximos a vencer</strong>?</span>
+          <div class="tog"><input type="checkbox" id="sm-tog-prox"/><div class="tog-track"></div></div>
+        </label>
+        <div id="sm-sec-prox" style="display:none;flex-direction:column;gap:.6rem"></div>
+        <hr class="div"/>
+        <!-- AVERIADOS -->
+        <label class="toggle-row" onclick="togSM('aver')">
+          <span class="toggle-label">¿Hay productos <strong>averiados</strong>?</span>
+          <div class="tog"><input type="checkbox" id="sm-tog-aver"/><div class="tog-track"></div></div>
+        </label>
+        <div id="sm-sec-aver" style="display:none;flex-direction:column;gap:.6rem"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:.85rem">
+      <div class="card-hdr"><div class="card-icon">📝</div><div><div class="card-title">Observaciones</div></div></div>
+      <div class="card-body">
+        <textarea id="obs-sm" placeholder="Observaciones adicionales…" rows="2"></textarea>
+      </div>
+    </div>`;
+}
+
+function togSM(tipo){
+  const tog=$('sm-tog-'+tipo);
+  tog.checked=!tog.checked;
+  const sec=$('sm-sec-'+tipo);
+  if(!tog.checked){ sec.style.display='none'; sec.innerHTML=''; return; }
+  sec.style.display='flex';
+  const label=tipo==='venc'?'vencido':tipo==='prox'?'próximo a vencer':'averiado';
+  if(tipo==='aver'){
+    const motivosHTML=S.motivos.length
+      ?`<div class="field"><label>Motivos <span class="req">*</span></label>
+          <div class="motivos-grid" id="sm-motivos">
+            ${S.motivos.map((m,i)=>`
+              <div class="mot-item" id="mot-${i}" onclick="togMot(${i},'${m.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">
+                <div class="mot-ck"></div><span class="mot-label">${m}</span>
+              </div>`).join('')}
+          </div></div>`:'';
+    sec.innerHTML=`${motivosHTML}
+      <div id="sm-aver-rows" style="display:flex;flex-direction:column;gap:.6rem"></div>
+      <button class="btn-add" onclick="addSMRow('aver')">＋ Agregar producto averiado</button>`;
+    S.selectedMotivos=new Set();
+  } else {
+    sec.innerHTML=`<div id="sm-${tipo}-rows" style="display:flex;flex-direction:column;gap:.6rem"></div>
+      <button class="btn-add" onclick="addSMRow('${tipo}')">＋ Agregar producto ${label}</button>`;
+  }
+  if(!S.counters['sm_'+tipo]) S.counters['sm_'+tipo]=0;
+  addSMRow(tipo);
+}
+
+function addSMRow(tipo){
+  const key='sm_'+tipo;
+  if(!S.counters[key]) S.counters[key]=0;
+  S.counters[key]++;
+  const n=S.counters[key];
+  const uid=`sm-${tipo}-${n}`;
+  const label=tipo==='venc'?'VENCIDO':tipo==='prox'?'PRÓXIMO':'AVERIADO';
+  const containerId=tipo==='aver'?'sm-aver-rows':`sm-${tipo}-rows`;
+  const container=$(containerId); if(!container) return;
+  const div=document.createElement('div');
+  div.className='prod-row'; div.id=uid;
+  const extraFields = tipo!=='aver' ? `
+    <div class="pg2">
+      <div class="field"><label>Fecha de vencimiento</label>
         <input type="date" id="${uid}-vence"/>
       </div>
-      <div class="field">
-        <label>Cantidad</label>
+      <div class="field"><label>Cantidad</label>
         <input type="number" id="${uid}-cant" min="1" placeholder="0" inputmode="numeric"/>
       </div>
     </div>` : `
-    <div class="prod-grid cols-2">
-      <div class="field">
-        <label>Cantidad averiada</label>
+    <div class="pg2">
+      <div class="field"><label>Cantidad averiada</label>
         <input type="number" id="${uid}-cant" min="1" placeholder="0" inputmode="numeric"/>
       </div>
-      <div class="field">
-        <label>Observación</label>
+      <div class="field"><label>Observación</label>
         <input type="text" id="${uid}-obs" placeholder="Detalle…"/>
       </div>
     </div>`;
-  div.innerHTML = `
-    <div class="prod-row-header">
-      <span class="prod-row-num">${tipo === 'venc' ? 'VENCIDO' : tipo === 'prox' ? 'PRÓXIMO' : 'AVERIADO'} #${n}</span>
-      <button class="btn-remove" onclick="removeRow('${uid}')">✕</button>
+  div.innerHTML=`
+    <div class="pr-hdr">
+      <span class="pr-num">${label} #${n}</span>
+      <button class="btn-rm" onclick="rmRow('${uid}')">✕</button>
     </div>
     <div class="field">
-      <select id="${uid}-prod">${opts}</select>
+      ${buildACField(uid+'-prod', uid)}
     </div>
     ${extraFields}`;
   container.appendChild(div);
 }
 
-// ── SHARED ROW UTILS ──────────────────────────────────────
-function buildProdOpts() {
-  if (!STATE.productos.length) return '<option value="">Escribí el producto…</option>';
-  return '<option value="">— Seleccionar producto —</option>' +
-    STATE.productos.map(p => `<option value="${p.nombre}">${p.nombre}</option>`).join('');
+function togMot(idx, val){
+  const el=$('mot-'+idx); if(!el) return;
+  if(S.selectedMotivos.has(val)){ S.selectedMotivos.delete(val); el.classList.remove('sel'); }
+  else { S.selectedMotivos.add(val); el.classList.add('sel'); }
 }
 
-function removeRow(uid) {
-  document.getElementById(uid)?.remove();
+// ── AUTOCOMPLETE ──────────────────────────────────────
+function buildACField(inputId, rowUid){
+  const ddId=inputId+'-dd';
+  const bcId=inputId+'-bc';
+  return `
+    <div class="ac-wrap">
+      <input class="ac-input" type="text" id="${inputId}"
+        placeholder="${S.productos.length?'Buscar producto…':'Escribí el producto…'}"
+        autocomplete="off"
+        oninput="acInput(this,'${ddId}','${rowUid}')"
+        onkeydown="acKey(event,'${inputId}','${ddId}','${rowUid}')"
+        onfocus="acInput(this,'${ddId}','${rowUid}')"/>
+      <div class="ac-barcode" id="${bcId}">
+        <span class="bc-label">Cód:</span>
+        <span class="bc-val" id="${inputId}-bcval">—</span>
+      </div>
+      <div class="ac-dropdown" id="${ddId}"></div>
+    </div>`;
 }
 
-// ══════════════════════════════════════════════════════════
-// STEP 4: RECOLECTAR Y ENVIAR
-// ══════════════════════════════════════════════════════════
-function recolectarDatos() {
-  const k = STATE.clienteKey;
-  const base = {
-    timestamp: new Date().toISOString(),
-    fecha: STATE.fecha,
-    ci: STATE.ci,
-    relevador: STATE.relevador?.nombre || '',
-    cliente: STATE.cliente,
-    clienteKey: k,
-    pdv: STATE.pdv?.nombre || '',
-    cadena: STATE.pdv?.cadena || '',
-    rows: [],
-    extras: {},
+function acInput(inp, ddId, rowUid){
+  if(!S.productos.length){ $(ddId).classList.remove('open'); return; }
+  const q=inp.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const matches=S.productos.filter(p=>{
+    const n=p.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return n.includes(q);
+  });
+  renderAC(ddId, matches, inp, rowUid, q);
+}
+
+function renderAC(ddId, matches, inp, rowUid, q){
+  const dd=$(ddId); if(!dd) return;
+  if(!matches.length){ dd.classList.remove('open'); dd.innerHTML=''; return; }
+  dd.innerHTML=matches.slice(0,12).map((p,i)=>{
+    const name=p.nombre;
+    const highlighted=name.replace(new RegExp('('+q.replace(/[-[\]{}()*+?.,\\^$|#\s]/g,'\\$&')+')', 'gi'),'<mark>$1</mark>');
+    return `<div class="ac-item" data-idx="${i}" data-nombre="${p.nombre}" data-codigo="${p.codigo||''}"
+      onclick="acSelect('${inp.id}','${ddId}','${rowUid}','${p.nombre.replace(/'/g,"\\'")}','${(p.codigo||'').replace(/'/g,"\\'")}')">
+      <span class="ai-name">${highlighted}</span>
+      ${p.codigo?`<span class="ai-code">${p.codigo}</span>`:''}
+    </div>`;
+  }).join('');
+  dd.classList.add('open');
+  // Cerrar al click fuera
+  setTimeout(()=>{
+    document.addEventListener('click', function h(e){
+      if(!dd.contains(e.target)&&e.target!==inp){ dd.classList.remove('open'); document.removeEventListener('click',h); }
+    });
+  },0);
+}
+
+function acKey(e, inpId, ddId, rowUid){
+  const dd=$(ddId); if(!dd||!dd.classList.contains('open')) return;
+  const items=dd.querySelectorAll('.ac-item');
+  let focused=dd.querySelector('.ac-item.focused');
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    const next=focused?focused.nextElementSibling:items[0];
+    items.forEach(i=>i.classList.remove('focused'));
+    if(next) next.classList.add('focused');
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    const prev=focused?.previousElementSibling;
+    items.forEach(i=>i.classList.remove('focused'));
+    if(prev) prev.classList.add('focused');
+  } else if(e.key==='Enter'&&focused){
+    e.preventDefault();
+    acSelect(inpId, ddId, rowUid, focused.dataset.nombre, focused.dataset.codigo);
+  } else if(e.key==='Escape'){
+    dd.classList.remove('open');
+  }
+}
+
+function acSelect(inpId, ddId, rowUid, nombre, codigo){
+  const inp=$(inpId); if(!inp) return;
+  inp.value=nombre;
+  inp.classList.add('has-val');
+  inp.dataset.selectedNombre=nombre;
+  inp.dataset.selectedCodigo=codigo||'';
+  $(ddId)?.classList.remove('open');
+  // Mostrar código de barra
+  const bcId=inpId+'-bc';
+  const bcValId=inpId+'-bcval';
+  if(codigo){
+    $(bcId)?.classList.add('show');
+    if($(bcValId)) $(bcValId).textContent=codigo;
+  } else {
+    $(bcId)?.classList.remove('show');
+  }
+}
+
+function getAcValue(inpId){
+  const inp=$(inpId); if(!inp) return {nombre:'',codigo:''};
+  // Solo acepta lo que fue seleccionado del dropdown
+  return {
+    nombre: inp.dataset.selectedNombre||'',
+    codigo: inp.dataset.selectedCodigo||'',
+  };
+}
+
+function rmRow(uid){ $(uid)?.remove(); }
+
+// ═══════════════════════════════════════════════════════
+// STEP 4 — RECOLECTAR Y ENVIAR
+// ═══════════════════════════════════════════════════════
+function recolectar(){
+  const k=S.clienteKey;
+  const base={
+    timestamp:new Date().toISOString(),
+    fecha:S.fecha, ci:S.ci,
+    relevador:S.rel?.nombre||'',
+    cliente:S.cliente, clienteKey:k,
+    pdv:S.pdv?.pdv||'', cadena:S.pdv?.cadena||'',
+    rows:[], extras:{},
   };
 
-  if (k === 'frigomerc') {
-    const tipo = $('frig-tipo')?.value;
-    if (!tipo) return { error: 'Seleccioná el tipo de formulario (Envasados / Carnicería).' };
-    base.extras.tipo = tipo;
-    const prods = window._frigProds || [];
-    const showBiggie = window._frigShowBiggie;
-    prods.forEach((p, i) => {
-      const sReg = parseFloat($(`super-reg-${i}`)?.value || '0') || 0;
-      const sOfer = parseFloat($(`super-ofer-${i}`)?.value || '0') || 0;
-      const bReg = showBiggie ? (parseFloat($(`biggie-reg-${i}`)?.value || '0') || 0) : null;
-      const bOfer = showBiggie ? (parseFloat($(`biggie-ofer-${i}`)?.value || '0') || 0) : null;
-      // Skip empty rows
-      if (!sReg && !sOfer && bReg === 0 && bOfer === 0) return;
+  if(k==='frigomerc'){
+    const tipo=window._frigType||'envasados';
+    const prods=window._frigProds||[];
+    const isBig=tipo==='envasados';
+    base.extras.tipo=tipo;
+    prods.forEach((p,i)=>{
+      const sr=parseFloat($('sr-'+i)?.value||'0')||0;
+      const so=parseFloat($('so-'+i)?.value||'0')||0;
+      const br=isBig?(parseFloat($('br-'+i)?.value||'0')||0):null;
+      const bo=isBig?(parseFloat($('bo-'+i)?.value||'0')||0):null;
+      // Solo guardar si se ingresó al menos un precio
+      if(!sr&&!so&&br===0&&bo===0) return;
+      if(!sr&&!so&&br===null&&bo===null) return;
       base.rows.push({
-        producto: p.nombre, codigo: p.codigo || '',
-        super_regular: sReg, super_oferta: sOfer,
-        biggie_regular: bReg, biggie_oferta: bOfer,
+        producto:p.nombre, codigo:p.codigo||'',
+        super_regular:sr, super_oferta:so,
+        biggie_regular:br, biggie_oferta:bo,
       });
     });
-    base.extras.observaciones = $('obs-frig')?.value.trim() || '';
-
-    // Validate: check for errors
-    const errors = c => c.querySelectorAll('.price-input.error');
-    const container = $('frig-prices-container');
-    if (container && errors(container).length > 0) {
-      return { error: 'Hay precios con errores. Revisá los campos marcados en rojo.' };
-    }
+    base.extras.observaciones=$('obs-frig')?.value.trim()||'';
+    // Verificar errores de precio
+    const errCount=document.querySelectorAll('.price-inp.err').length;
+    if(errCount>0) return {error:'Hay precios con errores. Revisá los campos marcados en rojo.'};
   }
 
-  else if (k === 'frutika') {
-    const tieneV = $('fru-tiene-vencer')?.checked;
-    if (tieneV) {
-      document.querySelectorAll('[id^="fru-row-"]').forEach(row => {
-        const uid = row.id;
+  else if(k==='frutika'){
+    if($('fru-tog')?.checked){
+      document.querySelectorAll('[id^="fr"][id$="-vence"]').forEach(el=>{
+        const uid=el.id.replace('-vence','');
+        const ac=getAcValue(uid+'-prod');
+        if(!ac.nombre) return; // Skip si no hay producto seleccionado
+        const fechaStr=$(uid+'-vence')?.value||'';
+        const estado=getEstado(fechaStr);
         base.rows.push({
-          tipo: 'vencer',
-          producto: $(`${uid}-prod`)?.value || '',
-          estado: $(`${uid}-estado`)?.value || '',
-          vence: $(`${uid}-vence`)?.value || '',
-          cantidad: parseFloat($(`${uid}-cant`)?.value || '0') || 0,
-          lote: $(`${uid}-lote`)?.value || '',
+          tipo:'vencer',
+          producto:ac.nombre,
+          codigo:ac.codigo,
+          estado,
+          vence:fechaStr,
+          cantidad:parseFloat($(uid+'-cant')?.value||'0')||0,
         });
       });
     }
-    base.extras.observaciones = $('obs-fru')?.value.trim() || '';
+    base.extras.observaciones=$('obs-fru')?.value.trim()||'';
+    if(!$('fru-tog')?.checked)
+      return {error:'Indicá si hay productos próximos a vencer o vencidos.'};
   }
 
-  else if (k === 'santa_margarita') {
-    // Vencidos
-    if ($('sm-tiene-vencidos')?.checked) {
-      document.querySelectorAll('[id^="sm-venc-"]').forEach(row => {
-        const uid = row.id;
-        base.rows.push({
-          tipo: 'vencido',
-          producto: $(`${uid}-prod`)?.value || '',
-          vence: $(`${uid}-vence`)?.value || '',
-          cantidad: parseFloat($(`${uid}-cant`)?.value || '0') || 0,
-        });
+  else if(k==='santa_margarita'){
+    const tieneVenc=$('sm-tog-venc')?.checked;
+    const tieneProx=$('sm-tog-prox')?.checked;
+    const tieneAver=$('sm-tog-aver')?.checked;
+    if(!tieneVenc&&!tieneProx&&!tieneAver)
+      return {error:'Activá al menos una sección para continuar.'};
+    if(tieneVenc){
+      document.querySelectorAll('[id^="sm-venc-"]').forEach(row=>{
+        const uid=row.id;
+        const ac=getAcValue(uid+'-prod');
+        if(!ac.nombre) return;
+        base.rows.push({tipo:'vencido',producto:ac.nombre,codigo:ac.codigo,
+          vence:$(uid+'-vence')?.value||'',cantidad:parseFloat($(uid+'-cant')?.value||'0')||0});
       });
     }
-    // Próximos
-    if ($('sm-tiene-prox')?.checked) {
-      document.querySelectorAll('[id^="sm-prox-"]').forEach(row => {
-        const uid = row.id;
-        base.rows.push({
-          tipo: 'proximo',
-          producto: $(`${uid}-prod`)?.value || '',
-          vence: $(`${uid}-vence`)?.value || '',
-          cantidad: parseFloat($(`${uid}-cant`)?.value || '0') || 0,
-        });
+    if(tieneProx){
+      document.querySelectorAll('[id^="sm-prox-"]').forEach(row=>{
+        const uid=row.id;
+        const ac=getAcValue(uid+'-prod');
+        if(!ac.nombre) return;
+        base.rows.push({tipo:'proximo',producto:ac.nombre,codigo:ac.codigo,
+          vence:$(uid+'-vence')?.value||'',cantidad:parseFloat($(uid+'-cant')?.value||'0')||0});
       });
     }
-    // Averiados
-    if ($('sm-tiene-aver')?.checked) {
-      const motivos = Array.from(STATE.selectedMotivos).join(', ');
-      document.querySelectorAll('[id^="sm-aver-"]').forEach(row => {
-        const uid = row.id;
-        base.rows.push({
-          tipo: 'averiado',
-          producto: $(`${uid}-prod`)?.value || '',
-          cantidad: parseFloat($(`${uid}-cant`)?.value || '0') || 0,
-          motivos: motivos,
-          obs: $(`${uid}-obs`)?.value || '',
-        });
+    if(tieneAver){
+      const motivos=Array.from(S.selectedMotivos).join(', ');
+      document.querySelectorAll('[id^="sm-aver-"]').forEach(row=>{
+        const uid=row.id;
+        const ac=getAcValue(uid+'-prod');
+        if(!ac.nombre) return;
+        base.rows.push({tipo:'averiado',producto:ac.nombre,codigo:ac.codigo,
+          cantidad:parseFloat($(uid+'-cant')?.value||'0')||0,
+          motivos,obs:$(uid+'-obs')?.value||''});
       });
     }
-    base.extras.observaciones = $('obs-sm')?.value.trim() || '';
+    base.extras.observaciones=$('obs-sm')?.value.trim()||'';
   }
 
   return base;
 }
 
-async function enviarFormulario() {
+async function enviar(){
   hideErr('err-form');
-  const payload = recolectarDatos();
-  if (payload.error) {
-    showErr('err-form', payload.error);
-    return;
-  }
-  showOnly('loader-save');
-  setStep(3);
-  try {
-    const result = await apiFetch({ action: 'saveRelevamiento', data: payload });
-    if (result.success) {
-      showOnly('scr-success');
-      $('success-detail').textContent =
-        `Guardado el ${payload.fecha} para ${payload.pdv}. ¡Gracias ${payload.relevador}!`;
-    } else {
-      throw new Error(result.message || 'Error al guardar');
-    }
-  } catch(e) {
-    showOnly('scr-form');
-    setStep(2);
-    showErr('err-form', 'No se pudo guardar. Verificá el internet e intentá de nuevo.');
-    console.error(e);
+  const payload=recolectar();
+  if(payload.error){ showErr('err-form',payload.error); return; }
+  show('ldr-save'); setStep(3);
+  try{
+    const r=await apiFetch({action:'saveRelevamiento',data:payload});
+    if(r.success){
+      show('scr-ok');
+      $('suc-detail').textContent=`Guardado el ${payload.fecha} · ${payload.pdv}. ¡Gracias ${payload.relevador}!`;
+    } else throw new Error(r.message||'Error al guardar');
+  } catch(e){
+    show('scr-form'); setStep(2);
+    showErr('err-form','No se pudo guardar. Verificá el internet e intentá de nuevo.');
   }
 }
 
-function nuevoRelevamiento() {
-  STATE.ci = ''; STATE.relevador = null; STATE.pdv = null;
-  STATE.fecha = ''; STATE.cliente = ''; STATE.clienteKey = '';
-  STATE.productos = []; STATE.motivos = []; STATE.rowCounters = {};
-  STATE.selectedMotivos = new Set();
-  $('cedula-input').value = '';
-  $('form-content').innerHTML = '';
-  $('client-badge').style.display = 'none';
-  $('step-progress').style.display = 'none';
-  // Reset theme
-  document.documentElement.style.setProperty('--client-color', '#f59e0b');
-  document.documentElement.style.setProperty('--client-bg', '#f59e0b18');
-  showOnly('scr-cedula');
+function reset(){
+  Object.assign(S,{ci:'',rel:null,pdv:null,fecha:'',clienteKey:'',cliente:'',
+    productos:[],motivos:[],counters:{},selectedMotivos:new Set()});
+  $('ci-inp').value='';
+  $('form-content').innerHTML='';
+  $('cpill').style.display='none';
+  $('steps').style.display='none';
+  document.documentElement.style.setProperty('--cc','#f5a623');
+  document.documentElement.style.setProperty('--cb','#f5a62318');
+  $('logo').style.background='linear-gradient(135deg,#f5a623,#f5a62399)';
+  show('scr-cedula');
 }
 
-// ── INIT ──────────────────────────────────────────────────
-$('cedula-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') validarCedula();
-});
+// Init
+$('ci-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') validarCI(); });
 </script>
 </body>
 </html>
