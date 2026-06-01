@@ -627,7 +627,7 @@ textarea{resize:vertical;min-height:72px;}
 // ═══════════════════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKq6Qvvc7CPSTuSDfmRuIJwlzzMjkyQJLSUPHFy687hriWtVwgIzCWkBxm_mbC03y1bQ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxbNBrR-3MUpfdzTWmSLr55zbmf3FOVP8ICkYZtOu8cLlGU0JCoPKoCSJ3kbxkEPYRww/exec';
 
 const CLIENTS = {
   frigomerc:       { color:'#f97316', label:'Frigomerc',       emoji:'🥩' },
@@ -879,52 +879,49 @@ function renderForm(){
 
 // ── FRIGOMERC ─────────────────────────────────────────
 function renderFrigomerc(c){
-  // Detectar tipo por cadena del PDV seleccionado
   const cadena=(S.pdv?.cadena||'').toUpperCase();
   const isBig=cadena.includes('BIGGIE')||cadena.includes('BIGI');
-  window._frigType = isBig ? 'envasados' : 'carniceria';
+  window._frigType  = isBig ? 'envasados' : 'carniceria';
+  window._frigIsBig = isBig;
 
   const prods = S.productos.filter(p=>{
     if(isBig) return p.formulario==='envasados'||!p.formulario||p.formulario==='';
     else return p.formulario==='carniceria';
   });
   window._frigProds = prods;
+  window._cortesNuevos = 0;
 
-  const cols = isBig
-    ? `<th>Producto</th><th>Super Regular</th><th>Super Oferta</th><th>Biggie Regular</th><th>Biggie Oferta</th>`
-    : `<th>Producto</th><th>Precio Regular</th><th>Precio Oferta</th>`;
+  // BigGie → solo 2 cols de Biggie; Super → solo 2 cols de Super
+  const priceCols = isBig
+    ? '<th>Producto</th><th>Biggie Regular</th><th>Biggie Oferta</th>'
+    : '<th>Producto</th><th>Precio Regular</th><th>Precio Oferta</th>';
 
-  const rows = prods.map((p,i)=>`
+  const priceRows = prods.map((p,i)=>`
     <tr id="frig-row-${i}">
       <td>
         <div class="pname">${p.nombre}</div>
         ${p.codigo?`<div class="pcode">${p.codigo}</div>`:''}
       </td>
       <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
-        <input class="price-inp" type="number" id="sr-${i}" placeholder="0" min="100" max="9999999" inputmode="numeric"
-          onblur="valPrecio(this,'so-${i}')" onchange="valPrecio(this,'so-${i}')"/>
+        <input class="price-inp" type="number" id="p1-${i}" placeholder="0" min="100" max="9999999" inputmode="numeric"
+          onblur="valPrecio(this,'p2-${i}')" onchange="valPrecio(this,'p2-${i}')"/>
       </div></td>
       <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
-        <input class="price-inp" type="number" id="so-${i}" placeholder="0" min="0" max="9999999" inputmode="numeric"
-          onblur="valOferta(this,'sr-${i}')" onchange="valOferta(this,'sr-${i}')"/>
+        <input class="price-inp" type="number" id="p2-${i}" placeholder="0" min="0" max="9999999" inputmode="numeric"
+          onblur="valOferta(this,'p1-${i}')" onchange="valOferta(this,'p1-${i}')"/>
       </div></td>
-      ${isBig?`
-      <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
-        <input class="price-inp" type="number" id="br-${i}" placeholder="0" min="100" max="9999999" inputmode="numeric"
-          onblur="valPrecio(this,'bo-${i}')" onchange="valPrecio(this,'bo-${i}')"/>
-      </div></td>
-      <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
-        <input class="price-inp" type="number" id="bo-${i}" placeholder="0" min="0" max="9999999" inputmode="numeric"
-          onblur="valOferta(this,'br-${i}')" onchange="valOferta(this,'br-${i}')"/>
-      </div></td>`:''}
     </tr>`).join('');
+
+  const typeLabel = isBig ? 'BigGie' : 'Supermercado';
+  const typeClass = isBig ? 'psb-b'  : 'psb-s';
+  const typeIcon  = isBig ? '🟡'     : '🟢';
 
   c.innerHTML=`
     <div class="card" style="margin-top:.85rem">
       <div class="card-hdr">
         <div class="card-icon">🥩</div>
         <div>
-          <div class="card-title">Frigomerc · ${isBig?'Envasados (Super + BigGie)':'Carnicería (Supermercado)'}</div>
+          <div class="card-title">Frigomerc · ${typeLabel}</div>
           <div class="card-sub">${S.pdv?.pdv||''} · ${S.pdv?.cadena||''}</div>
         </div>
       </div>
@@ -939,29 +936,62 @@ function renderFrigomerc(c){
               </div>
             </div>
             <div class="price-section-hdr">
-              💰 Precios en góndola
-              <span class="psb ${isBig?'psb-b':'psb-s'}">${isBig?'Envasados':'Carnicería'}</span>
+              ${typeIcon} Precios en góndola
+              <span class="psb ${typeClass}">${typeLabel}</span>
             </div>
             <table class="ptable">
-              <thead><tr>${cols}</tr></thead>
-              <tbody id="price-tbody">${rows}</tbody>
+              <thead><tr>${priceCols}</tr></thead>
+              <tbody id="price-tbody">${priceRows}</tbody>
             </table>
-          <div class="no-results">No se encontraron productos</div>
+            <div class="no-results">No se encontraron productos</div>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="card" style="margin-top:.85rem">
-      <div class="card-hdr"><div class="card-icon">📝</div><div><div class="card-title">Observaciones</div></div></div>
-      <div class="card-body">
-        <textarea id="obs-frig" placeholder="Observaciones adicionales…" rows="2"></textarea>
+        <!-- CORTE NUEVO -->
+        <div style="padding:.75rem .9rem 1rem;border-top:1px solid var(--border)">
+          <div class="price-section-hdr" style="border-radius:8px 8px 0 0;margin-bottom:.5rem">
+            ➕ Corte nuevo en ${typeLabel}
+            <span class="psb ${typeClass}">${typeLabel}</span>
+          </div>
+          <div id="cortes-nuevos" style="display:flex;flex-direction:column;gap:.6rem"></div>
+          <button class="btn-add" style="margin-top:.35rem" onclick="addCorteNuevo()">＋ Agregar corte nuevo</button>
+        </div>
       </div>
     </div>`;
 }
 
+function addCorteNuevo(){
+  window._cortesNuevos=(window._cortesNuevos||0)+1;
+  const n=window._cortesNuevos, uid='cn-'+n;
+  const container=$('cortes-nuevos'); if(!container) return;
+  const isBig=window._frigIsBig;
+  const priceLabel=isBig?'Precio Biggie (Gs)':'Precio Regular (Gs)';
+  const div=document.createElement('div');
+  div.className='prod-row'; div.id=uid;
+  div.innerHTML=`
+    <div class="pr-hdr">
+      <span class="pr-num">CORTE NUEVO #${n}</span>
+      <button class="btn-rm" onclick="rmRow('${uid}')">✕</button>
+    </div>
+    <div class="pg2">
+      <div class="field" style="grid-column:1/-1">
+        <label>Nombre del corte <span class="req">*</span></label>
+        <input type="text" id="${uid}-nombre" placeholder="Ej: Asado de tira…"/>
+      </div>
+      <div class="field">
+        <label>Marca</label>
+        <input type="text" id="${uid}-marca" placeholder="Ej: Frigomerc…"/>
+      </div>
+      <div class="field">
+        <label>${priceLabel}</label>
+        <input type="number" id="${uid}-precio" placeholder="0" min="100" inputmode="numeric" style="font-family:var(--mono)"/>
+      </div>
+    </div>`;
+  container.appendChild(div);
+}
+
 function valPrecio(inp, oferid){
   const v=parseFloat(inp.value);
-  if(inp.value&&(v<100||v>9999999)){ inp.classList.add('err'); inp.classList.remove('ok'); }
+  if(inp.value&&(v<CONFIG.precio_min||v>CONFIG.precio_max)){ inp.classList.add('err'); inp.classList.remove('ok'); }
   else if(inp.value){ inp.classList.remove('err'); inp.classList.add('ok'); }
   else { inp.classList.remove('err','ok'); }
 }
@@ -992,12 +1022,7 @@ function renderFrutika(c){
         <div id="fru-sec" style="display:none;flex-direction:column;gap:.65rem"></div>
       </div>
     </div>
-    <div class="card" style="margin-top:.85rem">
-      <div class="card-hdr"><div class="card-icon">📝</div><div><div class="card-title">Observaciones</div></div></div>
-      <div class="card-body">
-        <textarea id="obs-fru" placeholder="Observaciones adicionales…" rows="2"></textarea>
-      </div>
-    </div>`;
+`;
 }
 
 function toggleFruVencer(){
@@ -1101,12 +1126,7 @@ function renderSM(c){
         <div id="sm-sec-aver" style="display:none;flex-direction:column;gap:.6rem"></div>
       </div>
     </div>
-    <div class="card" style="margin-top:.85rem">
-      <div class="card-hdr"><div class="card-icon">📝</div><div><div class="card-title">Observaciones</div></div></div>
-      <div class="card-body">
-        <textarea id="obs-sm" placeholder="Observaciones adicionales…" rows="2"></textarea>
-      </div>
-    </div>`;
+`;
 }
 
 function togSM(tipo){
@@ -1291,7 +1311,12 @@ function rmRow(uid){ $(uid)?.remove(); }
 function recolectar(){
   const k=S.clienteKey;
   const base={
-    timestamp:new Date().toISOString(),
+    timestamp:(()=>{
+      const n=new Date();
+      const d=n.toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'});
+      const h=n.toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+      return d+' '+h;
+    })(),
     fecha:S.fecha, ci:S.ci,
     relevador:S.rel?.nombre||'',
     cliente:S.cliente, clienteKey:k,
@@ -1301,25 +1326,39 @@ function recolectar(){
 
   if(k==='frigomerc'){
     const tipo=window._frigType||'envasados';
+    const isBig=window._frigIsBig||false;
     const prods=window._frigProds||[];
-    const isBig=tipo==='envasados';
     base.extras.tipo=tipo;
+    // Precios cortes existentes
     prods.forEach((p,i)=>{
-      const sr=parseFloat($('sr-'+i)?.value||'0')||0;
-      const so=parseFloat($('so-'+i)?.value||'0')||0;
-      const br=isBig?(parseFloat($('br-'+i)?.value||'0')||0):null;
-      const bo=isBig?(parseFloat($('bo-'+i)?.value||'0')||0):null;
-      // Solo guardar si se ingresó al menos un precio
-      if(!sr&&!so&&br===0&&bo===0) return;
-      if(!sr&&!so&&br===null&&bo===null) return;
+      const p1=parseFloat($('p1-'+i)?.value||'0')||0;
+      const p2=parseFloat($('p2-'+i)?.value||'0')||0;
+      if(!p1&&!p2) return;
       base.rows.push({
+        tipo: isBig?'biggie':'super',
         producto:p.nombre, codigo:p.codigo||'',
-        super_regular:sr, super_oferta:so,
-        biggie_regular:br, biggie_oferta:bo,
+        super_regular: isBig?0:p1, super_oferta:isBig?0:p2,
+        biggie_regular:isBig?p1:0, biggie_oferta:isBig?p2:0,
+        corte_nuevo:false, marca_nueva:'',
       });
     });
-    base.extras.observaciones=$('obs-frig')?.value.trim()||'';
-    // Verificar errores de precio
+    // Cortes nuevos
+    const totalCN=window._cortesNuevos||0;
+    for(let n=1;n<=totalCN;n++){
+      const uid='cn-'+n;
+      const el=$(uid); if(!el) continue;
+      const nombre=el.querySelector('[id$="-nombre"]')?.value||'';
+      const marca =el.querySelector('[id$="-marca"]')?.value||'';
+      const precio=parseFloat(el.querySelector('[id$="-precio"]')?.value||'0')||0;
+      if(!nombre) continue;
+      base.rows.push({
+        tipo: isBig?'biggie_nuevo':'super_nuevo',
+        producto:nombre, codigo:'',
+        super_regular: isBig?0:precio, super_oferta:0,
+        biggie_regular:isBig?precio:0, biggie_oferta:0,
+        corte_nuevo:true, marca_nueva:marca,
+      });
+    }
     const errCount=document.querySelectorAll('.price-inp.err').length;
     if(errCount>0) return {error:'Hay precios con errores. Revisá los campos marcados en rojo.'};
   }
@@ -1342,7 +1381,7 @@ function recolectar(){
         });
       });
     }
-    base.extras.observaciones=$('obs-fru')?.value.trim()||'';
+
     // Frutika puede enviarse aunque no haya productos (sin novedad)
   }
 
@@ -1381,7 +1420,7 @@ function recolectar(){
           motivos,obs:$(uid+'-obs')?.value||''});
       });
     }
-    base.extras.observaciones=$('obs-sm')?.value.trim()||'';
+
   }
 
   return base;
@@ -1421,6 +1460,20 @@ function reset(){
 }
 
 
+
+// ── CARGAR CONFIG DESDE SHEET ────────────────────────
+let CONFIG = { precio_min: 100, precio_max: 9999999 };
+
+async function cargarConfig(){
+  try {
+    const d = await apiFetch({action:'getConfig'});
+    if(d && d.config) {
+      CONFIG.precio_min = d.config.precio_min || 100;
+      CONFIG.precio_max = d.config.precio_max || 9999999;
+    }
+  } catch(e){ /* usa defaults */ }
+}
+
 // ── FRIGOMERC SEARCH ──────────────────────────────────
 function frigSearch(val){
   const q=val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -1440,6 +1493,7 @@ function frigSearch(val){
 
 // Init
 $('ci-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') validarCI(); });
+cargarConfig();
 </script>
 </body>
 </html>
