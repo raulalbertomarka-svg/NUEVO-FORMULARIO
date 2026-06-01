@@ -440,6 +440,57 @@ textarea{resize:vertical;min-height:72px;}
 .sec-divider span{font-size:.68rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;}
 .sec-divider::before,.sec-divider::after{content:'';flex:1;height:1px;background:var(--border);}
 
+
+
+/* ── CI PREVIEW CHIP ── */
+.ci-preview{
+  display:none;align-items:center;gap:.75rem;
+  padding:.75rem .9rem;margin-top:.5rem;
+  background:var(--card2);border:1.5px solid var(--border2);
+  border-radius:var(--r2);animation:fadeUp .18s var(--ease);
+  transition:border-color .3s;
+}
+.ci-preview.found{border-color:var(--green);display:flex;}
+.ci-preview.notfound{border-color:var(--red);display:flex;}
+.ci-preview.loading{border-color:var(--border2);display:flex;}
+.ci-av{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--cc),color-mix(in srgb,var(--cc) 60%,#000));
+  display:grid;place-items:center;font-weight:700;font-size:.85rem;color:#000;
+}
+.ci-av.loading-av{background:var(--border2);}
+.ci-av.notfound-av{background:#ff4d6a22;color:var(--red);font-size:1rem;}
+.ci-info .ci-nombre{font-weight:600;font-size:.88rem;}
+.ci-info .ci-cliente{font-size:.7rem;font-weight:600;margin-top:.15rem;}
+.ci-info .ci-estado{font-size:.7rem;color:var(--sub);margin-top:.1rem;}
+.ci-status-dot{
+  margin-left:auto;width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.ci-status-dot.green{background:var(--green);box-shadow:0 0 6px var(--green);}
+.ci-status-dot.red{background:var(--red);box-shadow:0 0 6px var(--red);}
+.ci-status-dot.pulse{
+  background:var(--sub);
+  animation:pulse .8s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ── SEARCH BOX ── */
+.search-wrap{position:relative;margin-bottom:.5rem;}
+.search-inp{
+  width:100%;background:var(--card2);border:1.5px solid var(--border2);
+  border-radius:var(--r2);color:var(--text);padding:.6rem .9rem .6rem 2.4rem;
+  font-size:.85rem;outline:none;transition:border-color .15s;
+}
+.search-inp:focus{border-color:var(--cc);box-shadow:0 0 0 3px color-mix(in srgb,var(--cc) 18%,transparent);}
+.search-icon{
+  position:absolute;left:.8rem;top:50%;transform:translateY(-50%);
+  color:var(--muted);font-size:.9rem;pointer-events:none;
+}
+.ptable tbody tr.hidden-row{display:none;}
+.no-results{
+  text-align:center;padding:1.5rem;font-size:.8rem;color:var(--muted);display:none;
+}
+
 /* ── MOBILE ── */
 @media(max-width:400px){
   .pg2{grid-template-columns:1fr;}
@@ -481,9 +532,20 @@ textarea{resize:vertical;min-height:72px;}
     <div class="card-body">
       <div class="field">
         <label>Cédula de Identidad <span class="req">*</span></label>
-        <input class="ci-input" type="text" id="ci-inp" inputmode="numeric" maxlength="10" placeholder="_ _ _ _ _ _ _ _" autocomplete="off"/>
+        <input class="ci-input" type="text" id="ci-inp" inputmode="numeric" maxlength="10" placeholder="_ _ _ _ _ _ _ _" autocomplete="off"
+          oninput="ciPreviewDebounce()"/>
       </div>
-      <button class="btn btn-primary" onclick="validarCI()">Verificar →</button>
+      <!-- Preview chip: aparece al escribir la cédula -->
+      <div class="ci-preview" id="ci-preview">
+        <div class="ci-av" id="ci-av">—</div>
+        <div class="ci-info">
+          <div class="ci-nombre" id="ci-nombre">—</div>
+          <div class="ci-cliente" id="ci-cliente"></div>
+          <div class="ci-estado" id="ci-estado"></div>
+        </div>
+        <div class="ci-status-dot" id="ci-dot"></div>
+      </div>
+      <button class="btn btn-primary" id="btn-verificar" onclick="validarCI()" disabled>Verificar →</button>
     </div>
   </div>
   <div class="err-msg" id="err-ci">⚠️ <span id="err-ci-txt">Cédula no encontrada.</span></div>
@@ -519,7 +581,7 @@ textarea{resize:vertical;min-height:72px;}
       </div>
       <div class="field">
         <label>Fecha de visita <span class="req">*</span></label>
-        <input type="date" id="fecha-inp"/>
+        <input type="date" id="fecha-inp" readonly style="opacity:.6;cursor:default;"/>
       </div>
     </div>
   </div>
@@ -643,6 +705,96 @@ function apiFetch(params){
 // ═══════════════════════════════════════════════════════
 // STEP 1 — CÉDULA
 // ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// CI PREVIEW — muestra nombre del relevador al escribir
+// ═══════════════════════════════════════════════════════
+let _previewTimer = null;
+let _lastPreviewCI = '';
+let _previewCache = {};   // cache para no repetir consultas
+
+function ciPreviewDebounce(){
+  const ci = $('ci-inp').value.trim();
+  // Resetear si borraron
+  if(!ci || ci.length < 5){
+    resetCiPreview();
+    return;
+  }
+  // Misma CI que la última → no repetir
+  if(ci === _lastPreviewCI) return;
+  // Cache hit
+  if(_previewCache[ci]){
+    renderCiPreview(_previewCache[ci], ci);
+    return;
+  }
+  // Mostrar loading
+  showCiLoading(ci);
+  clearTimeout(_previewTimer);
+  _previewTimer = setTimeout(() => fetchCiPreview(ci), 600);
+}
+
+async function fetchCiPreview(ci){
+  if(ci !== $('ci-inp').value.trim()) return; // ya cambió
+  try{
+    const d = await apiFetch({action:'getRelevador', ci});
+    _previewCache[ci] = d;
+    if(ci === $('ci-inp').value.trim()) renderCiPreview(d, ci);
+  } catch(e){
+    resetCiPreview();
+  }
+}
+
+function showCiLoading(ci){
+  _lastPreviewCI = '';
+  const prev = $('ci-preview');
+  prev.className = 'ci-preview loading';
+  $('ci-av').className = 'ci-av loading-av';
+  $('ci-av').textContent = '…';
+  $('ci-nombre').textContent = 'Buscando…';
+  $('ci-cliente').textContent = '';
+  $('ci-estado').textContent = 'CI: ' + ci;
+  $('ci-dot').className = 'ci-status-dot pulse';
+  $('btn-verificar').disabled = true;
+}
+
+function renderCiPreview(data, ci){
+  _lastPreviewCI = ci;
+  const prev = $('ci-preview');
+  if(!data.found){
+    prev.className = 'ci-preview notfound';
+    $('ci-av').className = 'ci-av notfound-av';
+    $('ci-av').textContent = '✕';
+    $('ci-nombre').textContent = data.error || 'Cédula no encontrada';
+    $('ci-nombre').style.color = 'var(--red)';
+    $('ci-cliente').textContent = '';
+    $('ci-estado').textContent = 'CI: ' + ci;
+    $('ci-dot').className = 'ci-status-dot red';
+    $('btn-verificar').disabled = true;
+    return;
+  }
+  const rel = data.relevador;
+  const cfg = CLIENTS[rel.clienteKey] || {color:'#f5a623', label:rel.cliente, emoji:'⭐'};
+  const init = rel.nombre.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  prev.className = 'ci-preview found';
+  $('ci-av').className = 'ci-av';
+  $('ci-av').style.background = `linear-gradient(135deg,${cfg.color},${cfg.color}99)`;
+  $('ci-av').textContent = init;
+  $('ci-nombre').textContent = rel.nombre;
+  $('ci-nombre').style.color = 'var(--text)';
+  $('ci-cliente').textContent = cfg.emoji + ' ' + cfg.label;
+  $('ci-cliente').style.color = cfg.color;
+  $('ci-estado').textContent = 'CI: ' + ci;
+  $('ci-dot').className = 'ci-status-dot green';
+  $('btn-verificar').disabled = false;
+}
+
+function resetCiPreview(){
+  _lastPreviewCI = '';
+  $('ci-preview').className = 'ci-preview';
+  $('ci-nombre').style.color = 'var(--text)';
+  $('btn-verificar').disabled = true;
+}
+
 async function validarCI(){
   const ci=$('ci-inp').value.trim();
   hideErr('err-ci');
@@ -700,9 +852,7 @@ function selectPDV(el, p){
 async function irAFormulario(){
   hideErr('err-pdv');
   if(!S.pdv){ showErr('err-pdv','Seleccioná un local para continuar.'); return; }
-  const fecha=$('fecha-inp').value;
-  if(!fecha){ showErr('err-pdv','Seleccioná la fecha de visita.'); return; }
-  S.fecha=fecha;
+  S.fecha=$('fecha-inp').value;
   $('ldr-form-msg').textContent='Cargando formulario de '+(CLIENTS[S.clienteKey]?.label||S.cliente)+'…';
   show('ldr-form');
   try{
@@ -781,14 +931,22 @@ function renderFrigomerc(c){
       <div class="card-body" style="padding:0">
         <div style="overflow-x:auto">
           <div class="price-section" style="border:none;border-radius:0">
+            <div style="padding:.75rem .9rem .25rem">
+              <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input class="search-inp" type="text" placeholder="Buscar corte o producto…"
+                  oninput="frigSearch(this.value)" autocomplete="off"/>
+              </div>
+            </div>
             <div class="price-section-hdr">
               💰 Precios en góndola
               <span class="psb ${isBig?'psb-b':'psb-s'}">${isBig?'Envasados':'Carnicería'}</span>
             </div>
             <table class="ptable">
               <thead><tr>${cols}</tr></thead>
-              <tbody>${rows}</tbody>
+              <tbody id="price-tbody">${rows}</tbody>
             </table>
+          <div class="no-results">No se encontraron productos</div>
           </div>
         </div>
       </div>
@@ -1185,8 +1343,7 @@ function recolectar(){
       });
     }
     base.extras.observaciones=$('obs-fru')?.value.trim()||'';
-    if(!$('fru-tog')?.checked)
-      return {error:'Indicá si hay productos próximos a vencer o vencidos.'};
+    // Frutika puede enviarse aunque no haya productos (sin novedad)
   }
 
   else if(k==='santa_margarita'){
@@ -1251,6 +1408,9 @@ function reset(){
   Object.assign(S,{ci:'',rel:null,pdv:null,fecha:'',clienteKey:'',cliente:'',
     productos:[],motivos:[],counters:{},selectedMotivos:new Set()});
   $('ci-inp').value='';
+  resetCiPreview();
+  _lastPreviewCI='';
+  _previewCache={};
   $('form-content').innerHTML='';
   $('cpill').style.display='none';
   $('steps').style.display='none';
@@ -1258,6 +1418,24 @@ function reset(){
   document.documentElement.style.setProperty('--cb','#f5a62318');
   $('logo').style.background='linear-gradient(135deg,#f5a623,#f5a62399)';
   show('scr-cedula');
+}
+
+
+// ── FRIGOMERC SEARCH ──────────────────────────────────
+function frigSearch(val){
+  const q=val.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  let visible=0;
+  document.querySelectorAll('#price-tbody tr').forEach(tr=>{
+    const name=(tr.querySelector('.pname')?.textContent||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const code=(tr.querySelector('.pcode')?.textContent||'').toLowerCase();
+    if(!q||name.includes(q)||code.includes(q)){
+      tr.classList.remove('hidden-row'); visible++;
+    } else {
+      tr.classList.add('hidden-row');
+    }
+  });
+  const nr=document.querySelector('.no-results');
+  if(nr) nr.style.display=visible===0?'block':'none';
 }
 
 // Init
