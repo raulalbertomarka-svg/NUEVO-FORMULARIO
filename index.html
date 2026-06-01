@@ -1299,7 +1299,7 @@ function buildACField(inputId, rowUid){
     <div class="ac-wrap-row">
       <div class="ac-wrap">
         <input class="ac-input" type="text" id="${inputId}"
-          placeholder="${S.productos.length?'Buscar por nombre o código…':'Escribí el producto…'}"
+          placeholder="${S.productos.length?'Buscar por nombre o código…':'—'}"
           autocomplete="off"
           oninput="acInput(this,'${ddId}','${rowUid}')"
           onkeydown="acKey(event,'${inputId}','${ddId}','${rowUid}')"
@@ -1309,6 +1309,15 @@ function buildACField(inputId, rowUid){
           <span class="bc-val" id="${inputId}-bcval">—</span>
         </div>
         <div class="ac-dropdown" id="${ddId}"></div>
+        <!-- Error: código no encontrado desde input manual -->
+        <div class="ac-not-found" style="display:none;align-items:center;gap:.4rem;
+          margin-top:.35rem;padding:.45rem .75rem;border-radius:8px;
+          background:#ff4d6a14;border:1px solid #ff4d6a40;font-size:.75rem;color:#ff8096;">
+          ✕ Código no encontrado en la base de datos
+        </div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:.28rem;padding-left:.1rem">
+          ⚠️ Solo se pueden guardar productos de la lista
+        </div>
       </div>
       <button class="scan-btn" title="Escanear código de barras"
         onclick="openCam('${inputId}','${ddId}','${rowUid}')">📷</button>
@@ -1316,13 +1325,21 @@ function buildACField(inputId, rowUid){
 }
 
 function acInput(inp, ddId, rowUid){
+  // Si el usuario edita el campo → invalidar selección previa
+  inp.dataset.selectedNombre='';
+  inp.dataset.selectedCodigo='';
+  inp.classList.remove('has-val');
+  // Ocultar código de barra
+  const bcId=inp.id+'-bc';
+  $(bcId)?.classList.remove('show');
+
   if(!S.productos.length){ $(ddId).classList.remove('open'); return; }
   const q=inp.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   if(!q){ $(ddId).classList.remove('open'); return; }
   const matches=S.productos.filter(p=>{
     const n=p.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
     const c=(p.codigo||'').toLowerCase();
-    return n.includes(q)||c.includes(q); // busca por nombre O código
+    return n.includes(q)||c.includes(q);
   });
   renderAC(ddId, matches, inp, rowUid, q);
 }
@@ -1522,6 +1539,17 @@ function recolectar(){
 
 async function enviar(){
   hideErr('err-form');
+  // Verificar que todos los campos de producto tengan selección válida
+  let sinSeleccion=0;
+  document.querySelectorAll('.ac-input').forEach(inp=>{
+    if(inp.value.trim() && !inp.dataset.selectedNombre){
+      inp.classList.add('err'); sinSeleccion++;
+    }
+  });
+  if(sinSeleccion>0){
+    showErr('err-form','Hay productos ingresados manualmente que no están en la lista. Seleccioná de la lista o usá el escáner.');
+    return;
+  }
   const payload=recolectar();
   if(payload.error){ showErr('err-form',payload.error); return; }
   show('ldr-save'); setStep(3);
@@ -1649,23 +1677,39 @@ async function scanFrame(){
 }
 
 function buscarPorCodigo(code, inputId, ddId, rowUid){
-  // Buscar en productos por código exacto primero, luego parcial
+  // Buscar por código exacto primero, luego parcial
   const match = S.productos.find(p=>(p.codigo||'').toLowerCase()===code.toLowerCase())
-             || S.productos.find(p=>(p.codigo||'').toLowerCase().includes(code.toLowerCase()));
+             || S.productos.find(p=>(p.codigo||'').includes(code));
   if(match){
     acSelect(inputId, ddId, rowUid, match.nombre, match.codigo||'');
     setCamStatus('');
   } else {
-    // No encontrado — poner el código en el campo para búsqueda manual
+    // Código no encontrado → bloquear, no dejar continuar
     const inp=$(inputId); if(!inp) return;
-    inp.value=code;
-    acInput(inp, ddId, rowUid);
-    // Mostrar aviso
-    const dd=$(ddId);
-    if(!dd||!dd.querySelector('.ac-item')){
-      inp.classList.add('err');
-      setTimeout(()=>inp.classList.remove('err'),2000);
-    }
+    inp.value='';
+    inp.dataset.selectedNombre='';
+    inp.dataset.selectedCodigo='';
+    inp.classList.remove('has-val');
+    $(ddId)?.classList.remove('open');
+    showCamNotFound(code);
+  }
+}
+
+function showCamNotFound(code){
+  // Mostrar mensaje de error en el modal si está abierto, sino un alert
+  const modal=$('cam-modal');
+  if(modal?.classList.contains('open')){
+    setCamStatus('✕ Código '+code+' no encontrado en la base de datos', true);
+    // Reanudar escaneo después de 2s
+    setTimeout(()=>{
+      setCamStatus('Apuntá al código de barras');
+      _camInterval=setInterval(()=>scanFrame(),300);
+    },2500);
+  } else {
+    // Vino de entrada manual
+    const row=document.activeElement?.closest('.prod-row');
+    const errEl=row?.querySelector('.ac-not-found');
+    if(errEl){ errEl.style.display='flex'; setTimeout(()=>errEl.style.display='none',3000); }
   }
 }
 
