@@ -236,7 +236,7 @@ textarea{resize:vertical;min-height:72px;}
   background:var(--card);border:1.5px solid var(--border2);
   border-radius:var(--r2);overflow:hidden;
   box-shadow:0 8px 32px #00000060;
-  display:none;max-height:220px;overflow-y:auto;
+  display:none;max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch;
 }
 .ac-dropdown.open{display:block;}
 .ac-item{
@@ -1247,7 +1247,7 @@ function acInput(inp, ddId, rowUid){
 function renderAC(ddId, matches, inp, rowUid, q){
   const dd=$(ddId); if(!dd) return;
   if(!matches.length){ dd.classList.remove('open'); dd.innerHTML=''; return; }
-  dd.innerHTML=matches.slice(0,12).map((p,i)=>{
+  dd.innerHTML=matches.map((p,i)=>{
     const name=p.nombre;
     const highlighted=name.replace(new RegExp('('+q.replace(/[-[\]{}()*+?.,\\^$|#\s]/g,'\\$&')+')', 'gi'),'<mark>$1</mark>');
     return `<div class="ac-item" data-idx="${i}" data-nombre="${p.nombre}" data-codigo="${p.codigo||''}"
