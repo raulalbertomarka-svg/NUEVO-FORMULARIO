@@ -627,7 +627,7 @@ textarea{resize:vertical;min-height:72px;}
 // ═══════════════════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKq6Qvvc7CPSTuSDfmRuIJwlzzMjkyQJLSUPHFy687hriWtVwgIzCWkBxm_mbC03y1bQ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxbNBrR-3MUpfdzTWmSLr55zbmf3FOVP8ICkYZtOu8cLlGU0JCoPKoCSJ3kbxkEPYRww/exec';
 
 const CLIENTS = {
   frigomerc:       { color:'#f97316', label:'Frigomerc',       emoji:'🥩' },
@@ -856,7 +856,12 @@ async function irAFormulario(){
   $('ldr-form-msg').textContent='Cargando formulario de '+(CLIENTS[S.clienteKey]?.label||S.cliente)+'…';
   show('ldr-form');
   try{
-    const d=await apiFetch({action:'getFormData',clienteKey:S.clienteKey});
+    // Cargar config y productos en paralelo
+    const [cfgRes, frmRes] = await Promise.allSettled([
+      cargarConfig(),
+      apiFetch({action:'getFormData',clienteKey:S.clienteKey}),
+    ]);
+    const d = frmRes.status==='fulfilled' ? frmRes.value : {};
     S.productos=d.productos||[]; S.motivos=d.motivos||[];
   } catch(e){ S.productos=[]; S.motivos=[]; }
   S.counters={};
@@ -903,11 +908,11 @@ function renderFrigomerc(c){
         ${p.codigo?`<div class="pcode">${p.codigo}</div>`:''}
       </td>
       <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
-        <input class="price-inp" type="number" id="p1-${i}" placeholder="0" min="100" max="9999999" inputmode="numeric"
+        <input class="price-inp" type="number" id="p1-${i}" placeholder="" min="100" max="9999999" inputmode="numeric"
           onblur="valPrecio(this,'p2-${i}')" onchange="valPrecio(this,'p2-${i}')"/>
       </div></td>
       <td><div style="display:flex;align-items:center"><span class="gs">Gs</span>
-        <input class="price-inp" type="number" id="p2-${i}" placeholder="0" min="0" max="9999999" inputmode="numeric"
+        <input class="price-inp" type="number" id="p2-${i}" placeholder="" min="0" max="9999999" inputmode="numeric"
           onblur="valOferta(this,'p1-${i}')" onchange="valOferta(this,'p1-${i}')"/>
       </div></td>
     </tr>`).join('');
@@ -991,9 +996,15 @@ function addCorteNuevo(){
 
 function valPrecio(inp, oferid){
   const v=parseFloat(inp.value);
-  if(inp.value&&(v<CONFIG.precio_min||v>CONFIG.precio_max)){ inp.classList.add('err'); inp.classList.remove('ok'); }
-  else if(inp.value){ inp.classList.remove('err'); inp.classList.add('ok'); }
-  else { inp.classList.remove('err','ok'); }
+  const val=inp.value.trim();
+  if(!val){ inp.classList.remove('err','ok'); return; }
+  if(v<CONFIG.precio_min||v>CONFIG.precio_max){
+    inp.classList.add('err'); inp.classList.remove('ok');
+    inp.title='Precio fuera de rango (mín: '+CONFIG.precio_min.toLocaleString()+' Gs)';
+  } else {
+    inp.classList.remove('err'); inp.classList.add('ok');
+    inp.title='';
+  }
 }
 function valOferta(inp, regid){
   const o=parseFloat(inp.value), r=parseFloat($(regid)?.value||'0');
@@ -1461,17 +1472,20 @@ function reset(){
 
 
 
-// ── CARGAR CONFIG DESDE SHEET ────────────────────────
+// ── CONFIG — se carga desde el Sheet antes de mostrar el formulario ──
 let CONFIG = { precio_min: 100, precio_max: 9999999 };
+let _configCargada = false;
 
 async function cargarConfig(){
+  if(_configCargada) return;
   try {
     const d = await apiFetch({action:'getConfig'});
     if(d && d.config) {
-      CONFIG.precio_min = d.config.precio_min || 100;
-      CONFIG.precio_max = d.config.precio_max || 9999999;
+      CONFIG.precio_min = Number(d.config.precio_min) || 100;
+      CONFIG.precio_max = Number(d.config.precio_max) || 9999999;
     }
   } catch(e){ /* usa defaults */ }
+  _configCargada = true;
 }
 
 // ── FRIGOMERC SEARCH ──────────────────────────────────
@@ -1493,7 +1507,6 @@ function frigSearch(val){
 
 // Init
 $('ci-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') validarCI(); });
-cargarConfig();
 </script>
 </body>
 </html>
