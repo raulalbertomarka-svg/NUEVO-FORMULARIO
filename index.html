@@ -474,6 +474,66 @@ textarea{resize:vertical;min-height:72px;}
 }
 @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 
+
+/* ── BARCODE SCANNER ── */
+.scan-btn{
+  width:38px;height:38px;border-radius:9px;flex-shrink:0;
+  background:var(--cb);border:1.5px solid color-mix(in srgb,var(--cc) 35%,transparent);
+  display:grid;place-items:center;font-size:1.05rem;
+  transition:all .15s var(--ease);cursor:pointer;
+}
+.scan-btn:hover{background:var(--cc);color:#000;}
+.ac-wrap-row{display:flex;align-items:flex-start;gap:.5rem;}
+.ac-wrap-row .ac-wrap{flex:1;min-width:0;}
+
+/* Modal cámara */
+.cam-modal{
+  display:none;position:fixed;inset:0;z-index:999;
+  background:#000000ee;flex-direction:column;align-items:center;justify-content:center;
+  gap:1rem;padding:1.5rem;
+}
+.cam-modal.open{display:flex;}
+.cam-box{
+  position:relative;width:100%;max-width:400px;
+  border-radius:16px;overflow:hidden;
+  border:2px solid var(--cc);
+}
+.cam-video{width:100%;display:block;background:#000;}
+.cam-overlay{
+  position:absolute;inset:0;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+}
+.cam-frame{
+  width:72%;height:35%;
+  border:2.5px solid var(--cc);border-radius:12px;
+  box-shadow:0 0 0 2000px #00000066;
+  position:relative;
+}
+.cam-frame::before,.cam-frame::after{
+  content:'';position:absolute;width:20px;height:20px;
+  border-color:var(--cc);border-style:solid;
+}
+.cam-frame::before{top:-2px;left:-2px;border-width:3px 0 0 3px;border-radius:4px 0 0 4px;}
+.cam-frame::after{bottom:-2px;right:-2px;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.cam-line{
+  position:absolute;left:5%;right:5%;height:2px;
+  background:linear-gradient(to right,transparent,var(--cc),transparent);
+  animation:scanLine 2s ease-in-out infinite;
+  top:50%;
+}
+@keyframes scanLine{
+  0%,100%{top:15%;opacity:.5}
+  50%{top:85%;opacity:1}
+}
+.cam-status{
+  font-size:.85rem;color:var(--text);text-align:center;
+  min-height:1.4rem;
+}
+.cam-status.ok{color:var(--green);font-weight:600;}
+.cam-status.err{color:var(--red);}
+.cam-actions{display:flex;gap:.75rem;width:100%;max-width:400px;}
+.cam-actions .btn{flex:1;padding:.75rem;}
+
 /* ── SEARCH BOX ── */
 .search-wrap{position:relative;margin-bottom:.5rem;}
 .search-inp{
@@ -619,6 +679,23 @@ textarea{resize:vertical;min-height:72px;}
   <div class="suc-sub" id="suc-detail">Los datos fueron guardados correctamente.</div>
   <div class="btn-wrap" style="width:100%;max-width:320px">
     <button class="btn btn-primary" onclick="reset()">+ Nuevo Relevamiento</button>
+  </div>
+</div>
+
+
+<!-- MODAL CÁMARA BARCODE -->
+<div class="cam-modal" id="cam-modal">
+  <div class="cam-box">
+    <video class="cam-video" id="cam-video" autoplay playsinline muted></video>
+    <div class="cam-overlay">
+      <div class="cam-frame">
+        <div class="cam-line"></div>
+      </div>
+    </div>
+  </div>
+  <div class="cam-status" id="cam-status">Apuntá la cámara al código de barras</div>
+  <div class="cam-actions">
+    <button class="btn btn-ghost" onclick="closeCam()">✕ Cerrar</button>
   </div>
 </div>
 
@@ -1219,27 +1296,33 @@ function buildACField(inputId, rowUid){
   const ddId=inputId+'-dd';
   const bcId=inputId+'-bc';
   return `
-    <div class="ac-wrap">
-      <input class="ac-input" type="text" id="${inputId}"
-        placeholder="${S.productos.length?'Buscar producto…':'Escribí el producto…'}"
-        autocomplete="off"
-        oninput="acInput(this,'${ddId}','${rowUid}')"
-        onkeydown="acKey(event,'${inputId}','${ddId}','${rowUid}')"
-        onfocus="acInput(this,'${ddId}','${rowUid}')"/>
-      <div class="ac-barcode" id="${bcId}">
-        <span class="bc-label">Cód:</span>
-        <span class="bc-val" id="${inputId}-bcval">—</span>
+    <div class="ac-wrap-row">
+      <div class="ac-wrap">
+        <input class="ac-input" type="text" id="${inputId}"
+          placeholder="${S.productos.length?'Buscar por nombre o código…':'Escribí el producto…'}"
+          autocomplete="off"
+          oninput="acInput(this,'${ddId}','${rowUid}')"
+          onkeydown="acKey(event,'${inputId}','${ddId}','${rowUid}')"
+          onfocus="acInput(this,'${ddId}','${rowUid}')"/>
+        <div class="ac-barcode" id="${bcId}">
+          <span class="bc-label">Cód:</span>
+          <span class="bc-val" id="${inputId}-bcval">—</span>
+        </div>
+        <div class="ac-dropdown" id="${ddId}"></div>
       </div>
-      <div class="ac-dropdown" id="${ddId}"></div>
+      <button class="scan-btn" title="Escanear código de barras"
+        onclick="openCam('${inputId}','${ddId}','${rowUid}')">📷</button>
     </div>`;
 }
 
 function acInput(inp, ddId, rowUid){
   if(!S.productos.length){ $(ddId).classList.remove('open'); return; }
-  const q=inp.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const q=inp.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(!q){ $(ddId).classList.remove('open'); return; }
   const matches=S.productos.filter(p=>{
     const n=p.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    return n.includes(q);
+    const c=(p.codigo||'').toLowerCase();
+    return n.includes(q)||c.includes(q); // busca por nombre O código
   });
   renderAC(ddId, matches, inp, rowUid, q);
 }
@@ -1503,6 +1586,101 @@ function frigSearch(val){
   });
   const nr=document.querySelector('.no-results');
   if(nr) nr.style.display=visible===0?'block':'none';
+}
+
+
+// ══════════════════════════════════════════════════════
+// BARCODE SCANNER — usa BarcodeDetector API (Chrome/Android)
+// ══════════════════════════════════════════════════════
+let _camStream   = null;
+let _camInterval = null;
+let _camTarget   = { inputId:'', ddId:'', rowUid:'' };
+let _camDetector = null;
+
+// Inicializar BarcodeDetector
+if ('BarcodeDetector' in window) {
+  _camDetector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code'] });
+}
+
+async function openCam(inputId, ddId, rowUid){
+  // Si no soporta BarcodeDetector → pedir código manualmente
+  if(!_camDetector){
+    const code = prompt('Ingresá el código de barras manualmente:');
+    if(code) buscarPorCodigo(code.trim(), inputId, ddId, rowUid);
+    return;
+  }
+  _camTarget = { inputId, ddId, rowUid };
+  const modal = $('cam-modal');
+  modal.classList.add('open');
+  setCamStatus('Iniciando cámara…');
+  try {
+    _camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode:'environment', width:{ideal:1280}, height:{ideal:720} }
+    });
+    const video = $('cam-video');
+    video.srcObject = _camStream;
+    await video.play();
+    setCamStatus('Apuntá al código de barras');
+    // Escanear cada 300ms
+    _camInterval = setInterval(() => scanFrame(), 300);
+  } catch(e){
+    setCamStatus('No se pudo acceder a la cámara: '+e.message, true);
+  }
+}
+
+async function scanFrame(){
+  const video = $('cam-video');
+  if(!video||!_camDetector||video.readyState<2) return;
+  try {
+    const barcodes = await _camDetector.detect(video);
+    if(barcodes.length>0){
+      const code = barcodes[0].rawValue;
+      setCamStatus('✓ Código encontrado: '+code, false, true);
+      clearInterval(_camInterval);
+      // Vibrar si está disponible
+      if(navigator.vibrate) navigator.vibrate([100,50,100]);
+      // Esperar 600ms para que el usuario vea el resultado
+      setTimeout(()=>{
+        closeCam();
+        buscarPorCodigo(code, _camTarget.inputId, _camTarget.ddId, _camTarget.rowUid);
+      }, 600);
+    }
+  } catch(_){}
+}
+
+function buscarPorCodigo(code, inputId, ddId, rowUid){
+  // Buscar en productos por código exacto primero, luego parcial
+  const match = S.productos.find(p=>(p.codigo||'').toLowerCase()===code.toLowerCase())
+             || S.productos.find(p=>(p.codigo||'').toLowerCase().includes(code.toLowerCase()));
+  if(match){
+    acSelect(inputId, ddId, rowUid, match.nombre, match.codigo||'');
+    setCamStatus('');
+  } else {
+    // No encontrado — poner el código en el campo para búsqueda manual
+    const inp=$(inputId); if(!inp) return;
+    inp.value=code;
+    acInput(inp, ddId, rowUid);
+    // Mostrar aviso
+    const dd=$(ddId);
+    if(!dd||!dd.querySelector('.ac-item')){
+      inp.classList.add('err');
+      setTimeout(()=>inp.classList.remove('err'),2000);
+    }
+  }
+}
+
+function closeCam(){
+  clearInterval(_camInterval);
+  if(_camStream){ _camStream.getTracks().forEach(t=>t.stop()); _camStream=null; }
+  const video=$('cam-video'); if(video) video.srcObject=null;
+  $('cam-modal')?.classList.remove('open');
+  _camInterval=null;
+}
+
+function setCamStatus(msg, isErr=false, isOk=false){
+  const el=$('cam-status'); if(!el) return;
+  el.textContent=msg;
+  el.className='cam-status'+(isErr?' err':isOk?' ok':'');
 }
 
 // Init
