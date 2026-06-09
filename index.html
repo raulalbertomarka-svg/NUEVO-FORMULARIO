@@ -561,9 +561,13 @@ textarea{resize:vertical;min-height:72px;}
 <body>
 <!-- INTRO SCREEN -->
 <div id="intro-screen">
-  <video id="intro-video" autoplay muted playsinline
-    src="https://drive.google.com/uc?export=download&id=1QgGZ6920-iaF_EFwiqQbBZEGToTBn5Vg">
-  </video>
+  <iframe id="intro-video"
+    src="https://www.youtube.com/embed/CsMTvBLMhxs?autoplay=1&mute=1&controls=0&loop=0&rel=0&playsinline=1&enablejsapi=1"
+    frameborder="0"
+    allow="autoplay; fullscreen"
+    allowfullscreen
+    style="width:100%;height:100%;border:none;display:block;background:#e8e6e1;">
+  </iframe>
 </div>
 
 <div id="app">
@@ -1717,8 +1721,7 @@ $('ci-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') validarCI(); });
 
 // ── INTRO SCREEN ─────────────────────────────────────────────────
 (function(){
-  const screen  = $('intro-screen');
-  const video   = $('intro-video');
+  const screen = $('intro-screen');
   if(!screen) return;
 
   function dismissIntro(){
@@ -1726,18 +1729,29 @@ $('ci-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') validarCI(); });
     setTimeout(()=>{ screen.classList.add('hidden'); }, 700);
   }
 
-  // Opción 1: el video termina solo → dismiss inmediato
-  video.addEventListener('ended', dismissIntro);
+  // Fallback: si YT API no responde, pasa a los 5s
+  let fallback = setTimeout(dismissIntro, 5000);
 
-  // Opción 2: fallback a 4.5s por si el video no carga
-  // (Google Drive puede tardar en responder)
-  const fallback = setTimeout(dismissIntro, 4500);
+  // YouTube IFrame API
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
 
-  // Si el video carga y dura menos de 4.5s, el 'ended' lo resuelve antes
-  // Si dura más, el fallback lo corta a los 4.5s
-  video.addEventListener('ended', ()=> clearTimeout(fallback));
+  window.onYouTubeIframeAPIReady = function(){
+    new YT.Player('intro-video', {
+      events:{
+        onStateChange: function(e){
+          // 0 = ended
+          if(e.data === YT.PlayerState.ENDED){
+            clearTimeout(fallback);
+            dismissIntro();
+          }
+        }
+      }
+    });
+  };
 
-  // Opción 3: toque en pantalla → skip manual
+  // Toque en pantalla → skip
   screen.addEventListener('click', ()=>{ clearTimeout(fallback); dismissIntro(); });
 })();
 </script>
