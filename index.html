@@ -550,21 +550,16 @@ textarea{resize:vertical;min-height:72px;}
 }
 #intro-screen.fade-out{opacity:0;pointer-events:none;}
 #intro-screen.hidden{display:none;}
-#intro-canvas{
-  max-width:100%;
-  max-height:100%;
-  object-fit:contain;
+#intro-gif{
+  width:100%;height:100%;
+  object-fit:cover;
 }
 </style>
 </head>
 <body>
 <!-- INTRO SCREEN -->
 <div id="intro-screen">
-  <!-- GIF oculto, usado como fuente para el canvas -->
-  <img id="intro-gif" src="logo_mp4.gif"
-    style="display:none" alt=""/>
-  <!-- Canvas donde se dibuja el GIF frame a frame -->
-  <canvas id="intro-canvas"></canvas>
+  <img id="intro-gif" src="logo_mp4.gif" alt=""/>
 </div>
 
 <div id="app">
@@ -1718,59 +1713,16 @@ $('ci-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') validarCI(); });
 
 // ── INTRO SCREEN ─────────────────────────────────────────────────
 (function(){
-  const screen  = $('intro-screen');
-  const canvas  = $('intro-canvas');
-  if(!screen || !canvas) return;
-
-  const GIF_DURATION = 5300; // duración exacta del GIF en ms
+  const screen = $('intro-screen');
+  if(!screen) return;
 
   function dismissIntro(){
     screen.classList.add('fade-out');
     setTimeout(()=>{ screen.classList.add('hidden'); }, 700);
   }
 
-  // Ajustar canvas al tamaño de pantalla
-  canvas.width  = window.innerWidth;
-  canvas.height = window.innerHeight;
-
-  // Mostrar el GIF en un <img> normal dentro del canvas
-  // La clave: lo mostramos durante exactamente GIF_DURATION ms
-  // luego lo ocultamos → el GIF queda congelado en el último frame
-  // y a los 700ms más hace fade out
-  const img = $('intro-gif');
-  const ctx = canvas.getContext('2d');
-
-  img.onload = function(){
-    // Dibujar el GIF en el canvas centrado
-    function draw(){
-      const iw = img.naturalWidth  || 690;
-      const ih = img.naturalHeight || 388;
-      const scale = Math.min(canvas.width/iw, canvas.height/ih);
-      const x = (canvas.width  - iw*scale) / 2;
-      const y = (canvas.height - ih*scale) / 2;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.drawImage(img, x, y, iw*scale, ih*scale);
-    }
-
-    // Animar mientras dura el GIF
-    let start = null;
-    let raf;
-    function animate(ts){
-      if(!start) start = ts;
-      draw();
-      if(ts - start < GIF_DURATION){
-        raf = requestAnimationFrame(animate);
-      } else {
-        // GIF terminó → pasar al formulario
-        cancelAnimationFrame(raf);
-        dismissIntro();
-      }
-    }
-    requestAnimationFrame(animate);
-  };
-
-  // Fallback por si la imagen no carga
-  setTimeout(dismissIntro, GIF_DURATION + 1000);
+  // El GIF dura exactamente 5300ms → pasar al formulario al terminar
+  setTimeout(dismissIntro, 5300);
 })();
 </script>
 </body>
