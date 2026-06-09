@@ -180,7 +180,11 @@ textarea{resize:vertical;min-height:72px;}
 .rel-meta{font-size:.68rem;color:var(--sub);margin-top:.1rem;font-family:var(--mono);}
 .rel-client{font-size:.7rem;color:var(--cc);margin-top:.18rem;font-weight:600;}
 
-.pdv-grid{display:flex;flex-direction:column;gap:.5rem;}
+.pdv-grid{display:flex;flex-direction:column;gap:.5rem;max-height:285px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:.2rem;}
+.pdv-grid::-webkit-scrollbar{width:3px;}
+.pdv-grid::-webkit-scrollbar-track{background:transparent;}
+.pdv-grid::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+.pdv-grid::-webkit-scrollbar-thumb:hover{background:var(--cc);}
 .pdv-card{
   display:flex;align-items:center;gap:.75rem;
   padding:.75rem .9rem;border-radius:var(--r2);
