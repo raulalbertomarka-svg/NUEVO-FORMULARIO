@@ -547,7 +547,6 @@ textarea{resize:vertical;min-height:72px;}
   display:flex;align-items:center;justify-content:center;
   overflow:hidden;
   transition:opacity .7s ease;
-  cursor:pointer;
 }
 #intro-screen.fade-out{opacity:0;pointer-events:none;}
 #intro-screen.hidden{display:none;}
@@ -556,23 +555,14 @@ textarea{resize:vertical;min-height:72px;}
   object-fit:cover;
   display:block;
 }
-#intro-tap-hint{
-  position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
-  font-family:var(--f);font-size:.75rem;color:#2d2d2d88;
-  letter-spacing:.08em;text-transform:uppercase;
-  animation:hintPulse 1.5s ease-in-out infinite;
-  pointer-events:none;
-}
-@keyframes hintPulse{0%,100%{opacity:.4}50%{opacity:1}}
 </style>
 </head>
 <body>
 <!-- INTRO SCREEN -->
 <div id="intro-screen">
-  <video id="intro-video" muted playsinline>
+  <video id="intro-video" autoplay muted playsinline preload="auto">
     <source src="logo.mp4" type="video/mp4">
   </video>
-  <div id="intro-tap-hint">Tocá para continuar</div>
 </div>
 
 <div id="app">
@@ -1728,7 +1718,6 @@ $('ci-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') validarCI(); });
 (function(){
   const screen = $('intro-screen');
   const video  = $('intro-video');
-  const hint   = $('intro-tap-hint');
   if(!screen || !video) return;
 
   function dismissIntro(){
@@ -1736,31 +1725,33 @@ $('ci-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') validarCI(); });
     setTimeout(()=>{ screen.classList.add('hidden'); }, 700);
   }
 
-  // Cuando el video termina → pasar al formulario
   video.addEventListener('ended', dismissIntro);
 
-  // Fallback: si algo falla, pasa a los 10s
-  let fallback = setTimeout(dismissIntro, 10000);
+  // Fallback: si el video no carga o falla, pasa a los 8s
+  let fallback = setTimeout(dismissIntro, 8000);
   video.addEventListener('ended', ()=> clearTimeout(fallback));
 
-  // Intentar autoplay
-  const playPromise = video.play();
-  if(playPromise !== undefined){
-    playPromise.then(()=>{
-      // Autoplay funcionó → ocultar hint
-      if(hint) hint.style.display = 'none';
-    }).catch(()=>{
-      // Autoplay bloqueado → mostrar hint, esperar toque para reproducir
-      if(hint) hint.style.display = 'block';
-      const startOnTap = ()=>{
-        video.play();
-        if(hint) hint.style.display = 'none';
-        screen.removeEventListener('click',  startOnTap);
-        screen.removeEventListener('touchend', startOnTap);
-      };
-      screen.addEventListener('click',   startOnTap);
-      screen.addEventListener('touchend', startOnTap);
-    });
+  // Estrategia 1: intentar play directo
+  function tryPlay(){
+    video.muted = true; // asegurar muted
+    const p = video.play();
+    if(p !== undefined){
+      p.catch(()=>{
+        // Estrategia 2: esperar canplaythrough y reintentar
+        video.addEventListener('canplaythrough', ()=>{
+          video.play().catch(()=>{});
+        }, { once: true });
+      });
+    }
+  }
+
+  // Intentar al cargar la página
+  if(document.readyState === 'complete'){
+    tryPlay();
+  } else {
+    window.addEventListener('load', tryPlay);
+    // También intentar apenas el DOM esté listo
+    document.addEventListener('DOMContentLoaded', tryPlay);
   }
 })();
 </script>
