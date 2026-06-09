@@ -539,9 +539,33 @@ textarea{resize:vertical;min-height:72px;}
   .pg2{grid-template-columns:1fr;}
   .ptable thead th:nth-child(n+3){display:none;}
 }
+
+/* ── INTRO SCREEN ── */
+#intro-screen{
+  position:fixed;inset:0;z-index:9999;
+  background:#e8e6e1;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  transition:opacity .7s ease;
+}
+#intro-screen.fade-out{opacity:0;pointer-events:none;}
+#intro-screen.hidden{display:none;}
+#intro-video{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+  background:#e8e6e1;
+}
 </style>
 </head>
 <body>
+<!-- INTRO SCREEN -->
+<div id="intro-screen">
+  <video id="intro-video" autoplay muted playsinline
+    src="https://drive.google.com/uc?export=download&id=1QgGZ6920-iaF_EFwiqQbBZEGToTBn5Vg">
+  </video>
+</div>
+
 <div id="app">
 
 <header class="hdr">
@@ -1690,6 +1714,32 @@ function setCamStatus(msg,isErr=false,isOk=false){
 }
 
 $('ci-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') validarCI(); });
+
+// ── INTRO SCREEN ─────────────────────────────────────────────────
+(function(){
+  const screen  = $('intro-screen');
+  const video   = $('intro-video');
+  if(!screen) return;
+
+  function dismissIntro(){
+    screen.classList.add('fade-out');
+    setTimeout(()=>{ screen.classList.add('hidden'); }, 700);
+  }
+
+  // Opción 1: el video termina solo → dismiss inmediato
+  video.addEventListener('ended', dismissIntro);
+
+  // Opción 2: fallback a 4.5s por si el video no carga
+  // (Google Drive puede tardar en responder)
+  const fallback = setTimeout(dismissIntro, 4500);
+
+  // Si el video carga y dura menos de 4.5s, el 'ended' lo resuelve antes
+  // Si dura más, el fallback lo corta a los 4.5s
+  video.addEventListener('ended', ()=> clearTimeout(fallback));
+
+  // Opción 3: toque en pantalla → skip manual
+  screen.addEventListener('click', ()=>{ clearTimeout(fallback); dismissIntro(); });
+})();
 </script>
 </body>
 </html>
