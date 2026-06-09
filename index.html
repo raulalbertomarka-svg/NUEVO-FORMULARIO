@@ -612,7 +612,17 @@ textarea{resize:vertical;min-height:72px;}
       </div>
       <div class="field">
         <label>Seleccioná el local <span class="req">*</span></label>
+        <div class="search-wrap" id="pdv-search-wrap" style="display:none;margin-bottom:.5rem">
+          <span class="search-icon">🔍</span>
+          <input class="search-inp" type="text" id="pdv-search"
+            placeholder="Buscar local o cadena…"
+            oninput="pdvSearch(this.value)"
+            autocomplete="off"/>
+        </div>
         <div class="pdv-grid" id="pdv-grid"></div>
+        <div id="pdv-no-results" style="display:none;text-align:center;padding:1rem;font-size:.8rem;color:var(--muted)">
+          Sin resultados para esa búsqueda
+        </div>
       </div>
       <div class="field">
         <label>Fecha de visita <span class="req">*</span></label>
@@ -898,7 +908,23 @@ function renderPDV(rel, pdvs){
     grid.appendChild(div);
   });
   if(pdvs?.length===1) selectPDV(grid.firstChild, pdvs[0]);
+  // Mostrar buscador solo si hay más de 4 PDVs
+  $('pdv-search-wrap').style.display = (pdvs?.length > 4) ? 'block' : 'none';
+  $('pdv-search').value = '';
   $('fecha-inp').value=new Date().toISOString().split('T')[0];
+}
+
+function pdvSearch(val){
+  const q = val.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  let visible = 0;
+  document.querySelectorAll('.pdv-card').forEach(card => {
+    const name   = (card.querySelector('.pi-name')?.textContent  || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const cadena = (card.querySelector('.pi-cadena')?.textContent || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const match  = !q || name.includes(q) || cadena.includes(q);
+    card.style.display = match ? '' : 'none';
+    if(match) visible++;
+  });
+  $('pdv-no-results').style.display = visible === 0 ? 'block' : 'none';
 }
 
 function selectPDV(el, p){
