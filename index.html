@@ -735,7 +735,7 @@ const CLIENTS = {
 // para un cliente, se usan los fallbacks de SECTION_FALLBACK.
 // ═══════════════════════════════════════════════════════
 const SECTION_META = {
-  vencidos:  { label:'Productos vencidos o Proximos a vencer',           icon:'🔴', tipo:'vencidos'  },
+  vencidos:  { label:'Productos vencidos',           icon:'🔴', tipo:'vencidos'  },
   proximos:  { label:'Próximos a vencer',            icon:'🟡', tipo:'proximos'  },
   averiados: { label:'Productos averiados',          icon:'🟠', tipo:'averiados' },
   merma:     { label:'Merma',                        icon:'📉', tipo:'merma'     },
@@ -1174,14 +1174,29 @@ function addDynRow(secId){
           <input type="text" id="${uid}-obs" placeholder="Detalle…"/>
         </div>
       </div>`;
-  } else if(meta.tipo === 'merma'){
-    extraFields = `
-      <div class="pg2">
-        <div class="field" style="grid-column:1/-1">
-          <label>Cantidad de merma</label>
-          <input type="number" id="${uid}-cant" min="1" placeholder="0" inputmode="numeric"/>
+  }
+
+  // ── MERMA: fila especial sin campo de producto ──────
+  if(meta.tipo === 'merma'){
+    const div = document.createElement('div');
+    div.className = 'prod-row';
+    div.id = uid;
+    div.innerHTML = `
+      <div class="pr-hdr">
+        <span class="pr-num">MERMA #${n}</span>
+        <button class="btn-rm" onclick="rmRow('${uid}')">✕</button>
+      </div>
+      <div class="field">
+        <label>Monto de merma (Gs) <span class="req">*</span></label>
+        <div style="display:flex;align-items:center;gap:.4rem">
+          <span style="font-size:.75rem;color:var(--muted);font-weight:600">Gs</span>
+          <input type="number" id="${uid}-cant" min="0" placeholder="0"
+            inputmode="numeric"
+            style="font-family:var(--mono);font-size:1.1rem;text-align:right;flex:1;"/>
         </div>
       </div>`;
+    container.appendChild(div);
+    return;
   }
 
   const div = document.createElement('div');
@@ -1529,15 +1544,20 @@ function recolectar(){
     for(let i=1; i<=n; i++){
       const uid = `dyn-${secId}-${i}`;
       const el  = $(uid); if(!el) continue;
-      const ac  = getAcValue(uid+'-prod');
-      if(!ac.nombre) continue;
+      // Merma no tiene campo de producto
+      const esMerma = meta.tipo === 'merma';
+      const ac = esMerma ? {nombre:'merma', codigo:''} : getAcValue(uid+'-prod');
+      if(!esMerma && !ac.nombre) continue;
+
+      const monto = parseFloat($(uid+'-cant')?.value||'0')||0;
+      if(esMerma && !monto) continue; // merma sin monto → skip
 
       const row = {
         seccion:  secId,
         tipo:     meta.tipo,
-        producto: ac.nombre,
+        producto: esMerma ? 'Merma' : ac.nombre,
         codigo:   ac.codigo,
-        cantidad: parseFloat($(uid+'-cant')?.value||'0')||0,
+        cantidad: monto,
       };
 
       if(meta.tipo==='vencidos'||meta.tipo==='proximos'){
@@ -1558,6 +1578,10 @@ function recolectar(){
 }
 
 async function enviar(){
+  // Bloquear botón inmediatamente para evitar envíos duplicados
+  const btnEnviar = document.querySelector('#scr-form .btn-primary');
+  if(btnEnviar) btnEnviar.disabled = true;
+
   hideErr('err-form');
   let sinSeleccion=0;
   document.querySelectorAll('.ac-input').forEach(inp=>{
@@ -1566,11 +1590,16 @@ async function enviar(){
     }
   });
   if(sinSeleccion>0){
+    if(btnEnviar) btnEnviar.disabled = false;
     showErr('err-form','Hay productos ingresados manualmente que no están en la lista. Seleccioná de la lista o usá el escáner.');
     return;
   }
   const payload=recolectar();
-  if(payload.error){ showErr('err-form',payload.error); return; }
+  if(payload.error){
+    if(btnEnviar) btnEnviar.disabled = false;
+    showErr('err-form',payload.error);
+    return;
+  }
   show('ldr-save'); setStep(3);
   try{
     const r=await apiFetch({action:'saveRelevamiento',data:payload});
@@ -1580,6 +1609,7 @@ async function enviar(){
     } else throw new Error(r.message||'Error al guardar');
   } catch(e){
     show('scr-form'); setStep(2);
+    if(btnEnviar) btnEnviar.disabled = false;
     showErr('err-form','No se pudo guardar. Verificá el internet e intentá de nuevo.');
   }
 }
