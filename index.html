@@ -1530,6 +1530,8 @@ function recolectar(){
     return {error:'Activá al menos una sección para continuar.'};
   }
 
+  let errCantidad = 0;
+
   seccionesActivas.forEach(secId => {
     const meta = SECTION_META[secId];
     if(!meta) return;
@@ -1552,6 +1554,13 @@ function recolectar(){
       const monto = parseFloat($(uid+'-cant')?.value||'0')||0;
       if(esMerma && !monto) continue; // merma sin monto → skip
 
+      // Validar cantidad > 0 para averiados y vencidos/proximos
+      if(!esMerma && monto <= 0){
+        const cantInp = $(uid+'-cant');
+        if(cantInp) cantInp.style.borderColor = 'var(--red)';
+        errCantidad++;
+      }
+
       const row = {
         seccion:  secId,
         tipo:     meta.tipo,
@@ -1573,6 +1582,10 @@ function recolectar(){
       base.rows.push(row);
     }
   });
+
+  if(errCantidad > 0){
+    return {error:'Completá la cantidad en todos los productos. No puede ser 0.'};
+  }
 
   return base;
 }
